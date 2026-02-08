@@ -2,122 +2,168 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Learning Analytics V2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Smart Exam - สำหรับนักเรียน</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #673AB7; --accent: #FFC107; }
-        body { font-family: 'Sarabun', sans-serif; margin: 0; background: #fafafa; }
-        .header { background: var(--primary); color: white; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; }
-        #ar-container { height: 45vh; background: #000; position: relative; }
-        model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
-        .quiz-box { padding: 20px; background: white; border-radius: 25px 25px 0 0; margin-top: -20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); min-height: 45vh; }
-        .opt { display: block; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 15px; cursor: pointer; transition: 0.2s; }
-        .opt.selected { border-color: var(--primary); background: #f3e5f5; }
-        .btn { background: #4CAF50; color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .ar-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); border: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; z-index: 10; }
-        #login { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        :root { --p: #764ba2; --s: #667eea; --glass: rgba(255,255,255,0.9); }
+        body { font-family: 'Sarabun', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; min-height: 100vh; overflow-x: hidden; }
+        
+        .container { max-width: 600px; margin: 40px auto; padding: 20px; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: fadeInUp 0.6s ease; }
+        
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .welcome-screen { text-align: center; }
+        input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #eee; margin: 10px 0; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--p); }
+
+        .btn { background: linear-gradient(45deg, var(--p), var(--s)); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; font-size: 18px; margin-top: 15px; transition: 0.3s; }
+        .btn:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+
+        .progress-container { width: 100%; background: #eee; height: 8px; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--p); width: 0%; transition: 0.5s; }
+
+        .ar-viewer { width: 100%; height: 350px; background: radial-gradient(circle, #444 0%, #000 100%); border-radius: 20px; margin-bottom: 20px; }
+        .option-btn { background: white; border: 2px solid #eee; padding: 15px; border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; text-align: left; font-size: 16px; }
+        .option-btn:hover { border-color: var(--p); background: #f8f0ff; }
+        .option-btn.selected { background: var(--p); color: white; border-color: var(--p); }
+
+        #analytics-box { display: none; text-align: center; }
+        .score-circle { width: 120px; height: 120px; line-height: 120px; border-radius: 50%; background: var(--p); color: white; font-size: 40px; margin: 20px auto; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="login">
-    <h2 style="color:var(--primary)">ระบบสอบ AR (แบบ 3 มิติ)</h2>
-    <input type="text" id="std-name" placeholder="ชื่อ-นามสกุลนักเรียน" style="padding:15px; width:80%; border:1px solid #ccc; border-radius:10px; margin-bottom:20px;">
-    <button class="btn" onclick="start()" style="width:85%">เริ่มทำข้อสอบ</button>
-</div>
+<div class="container">
+    <div id="lobby" class="glass-card welcome-screen">
+        <h1 style="color:var(--p)">✨ AR Intelligent Exam</h1>
+        <p>ยินดีต้อนรับนักเรียน เข้าสู่การทดสอบโลกเสมือน</p>
+        <input type="text" id="std-name" placeholder="ชื่อ-นามสกุลของคุณ">
+        <input type="text" id="quiz-id" placeholder="รหัสข้อสอบ (ที่ได้รับจากคุณครู)">
+        <button class="btn" onclick="startExam()">เริ่มการทดสอบ</button>
+    </div>
 
-<div class="header" id="q-head">ข้อที่ 1/3</div>
+    <div id="quiz-screen" class="glass-card" style="display:none;">
+        <div class="progress-container"><div id="p-bar" class="progress-bar"></div></div>
+        <div style="display:flex; justify-content: space-between; font-size: 14px; color: #666; margin-bottom: 10px;">
+            <span id="q-number">ข้อที่ 1/3</span>
+            <span id="timer">เวลา: 0 วินาที</span>
+        </div>
+        <h2 id="q-text" style="color:var(--p); margin-top:0;">กำลังโหลดคำถาม...</h2>
+        
+        <model-viewer id="ar-view" class="ar-viewer" camera-controls ar shadow-intensity="1" auto-rotate></model-viewer>
+        
+        <div id="options-area"></div>
+        <button class="btn" id="next-btn" onclick="submitAnswer()" style="display:none;">ส่งคำตอบ / ข้อถัดไป</button>
+    </div>
 
-<div id="ar-container">
-    <model-viewer id="v" src="" ar ar-modes="webxr scene-viewer quick-look" camera-controls shadow-intensity="1">
-        <button slot="ar-button" class="ar-btn">📲 เปิดกล้องส่องโลกจริง</button>
-    </model-viewer>
-</div>
-
-<div class="quiz-box">
-    <h3 id="q-text">โหลดโจทย์...</h3>
-    <div id="opts"></div>
-    <button id="next" class="btn" onclick="handleNext()">ข้อถัดไป</button>
+    <div id="result-screen" class="glass-card" style="display:none; text-align: center;">
+        <h2 style="color:var(--p)">ส่งข้อสอบสำเร็จ!</h2>
+        <div class="score-circle" id="final-score">0</div>
+        <p id="ai-feedback">AI กำลังวิเคราะห์พฤติกรรมการเรียนรู้ของคุณ...</p>
+        <button class="btn" onclick="location.reload()">ทำใหม่</button>
+    </div>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxUfoY263Dvn625Njl2oGxbFFnPrGgOSsxNkEjQxjbrRpvYDKjIj7q8fBeGVpuoeNh0MQ/exec';
-    const questions = [
-        { q: "1. จากโมเดลนักบินอวกาศ อุปกรณ์ที่หลังคืออะไร?", m: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", o: ["กระเป๋าเดินทาง", "ถังออกซิเจน", "ร่มชูชีพ"], a: "ถังออกซิเจน" },
-        { q: "2. โมเดลหัวใจมนุษย์นี้ ห้องหัวใจล่างซ้ายมีขนาดอย่างไร?", m: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb", o: ["ใหญ่และหนาที่สุด", "เล็กที่สุด", "ไม่มีกล้ามเนื้อ"], a: "ใหญ่และหนาที่สุด" },
-        { q: "3. วัตถุโบราณนี้ทำจากวัสดุประเภทใดเป็นหลัก?", m: "https://modelviewer.dev/shared-assets/models/Canoe.glb", o: ["เหล็ก", "ไม้", "พลาสติก"], a: "ไม้" }
-    ];
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyy2F49wddKckN-yqgrhdSzCdKbmBgFevB6iol32bqD7T5Xn00aWITQlk6c59TIWMIGPA/exec';
+    
+    let quizData = null;
+    let currentIdx = 0;
+    let score = 0;
+    let logs = [];
+    
+    // Analytics Variables
+    let qStartTime, arStartTime, isARViewing = false;
+    let currentLog = { time: 0, arTime: 0, changes: 0, interacts: 0 };
 
-    let current = 0, name = "", score = 0, history = [];
-    let qStart, arStart, viewARTot = 0, changeCnt = 0, interactCnt = 0, sel = "";
+    async function startExam() {
+        const name = document.getElementById('std-name').value;
+        const id = document.getElementById('quiz-id').value;
+        if(!name || !id) return alert("กรุณากรอกข้อมูลให้ครบครับ");
 
-    function start() {
-        name = document.getElementById('std-name').value;
-        if(!name) return alert("ใส่ชื่อด้วยจ้า");
-        document.getElementById('login').style.display = 'none';
-        loadQ();
+        try {
+            const res = await fetch(`${SCRIPT_URL}?action=getQuiz&id=${id}`);
+            quizData = await res.json();
+            if(quizData.error) throw new Error();
+            
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('quiz-screen').style.display = 'block';
+            loadQuestion();
+        } catch(e) { alert("ไม่พบรหัสข้อสอบนี้ โปรดเช็คอีกครั้งครับ"); }
     }
 
-    function loadQ() {
-        const q = questions[current];
-        document.getElementById('q-head').innerText = `ข้อที่ ${current+1}/3`;
+    function loadQuestion() {
+        const q = quizData.questions[currentIdx];
         document.getElementById('q-text').innerText = q.q;
-        document.getElementById('v').src = q.m;
-        const oDiv = document.getElementById('opts');
-        oDiv.innerHTML = "";
+        document.getElementById('q-number').innerText = `ข้อที่ ${currentIdx + 1}/${quizData.questions.length}`;
+        document.getElementById('ar-view').src = q.m;
+        
+        const optArea = document.getElementById('options-area');
+        optArea.innerHTML = '';
         q.o.forEach(opt => {
-            oDiv.innerHTML += `<div class="opt" onclick="select(this, '${opt}')">${opt}</div>`;
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.innerText = opt.trim();
+            btn.onclick = () => selectOption(btn, opt.trim());
+            optArea.appendChild(btn);
         });
-        qStart = Date.now();
-        viewARTot = 0; changeCnt = 0; interactCnt = 0; sel = "";
+
+        // Reset Analytics for this question
+        qStartTime = Date.now();
+        currentLog = { time: 0, arTime: 0, changes: 0, interacts: 0, order: currentIdx + 1 };
+        document.getElementById('next-btn').style.display = 'none';
+        
+        // Progress bar
+        document.getElementById('p-bar').style.width = `${((currentIdx) / quizData.questions.length) * 100}%`;
     }
 
-    function select(el, val) {
-        if(sel && sel !== val) changeCnt++;
-        sel = val;
-        document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    function selectOption(el, val) {
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
         el.classList.add('selected');
+        currentLog.selected = val;
+        currentLog.changes++;
+        document.getElementById('next-btn').style.display = 'block';
     }
 
-    const v = document.getElementById('v');
-    v.addEventListener('camera-change', () => interactCnt++);
-    v.addEventListener('ar-status', (e) => {
-        if(e.detail.status === "session-started") arStart = Date.now();
-        if(e.detail.status === "not-presenting" && arStart) {
-            viewARTot += Math.floor((Date.now() - arStart)/1000);
-            arStart = null;
-        }
+    // Track AR Interaction
+    document.getElementById('ar-view').addEventListener('camera-change', () => {
+        currentLog.interacts++;
     });
 
-    function handleNext() {
-        if(!sel) return alert("เลือกคำตอบก่อนนะ");
-        if(sel === questions[current].a) score++;
+    async function submitAnswer() {
+        const q = quizData.questions[currentIdx];
+        currentLog.time = (Date.now() - qStartTime) / 1000;
+        if(currentLog.selected === q.a.trim()) score++;
         
-        history.push({ t: Math.floor((Date.now()-qStart)/1000), c: changeCnt, i: interactCnt, v: viewARTot });
+        logs.push({...currentLog});
 
-        if(current < 2) {
-            current++; loadQ();
+        if(currentIdx < quizData.questions.length - 1) {
+            currentIdx++;
+            loadQuestion();
         } else {
-            sendData();
+            finishExam();
         }
     }
 
-    function sendData() {
-        document.body.innerHTML = "<div style='padding:50px; text-align:center;'><h2>กำลังส่งคะแนน...</h2></div>";
-        const sum = history.reduce((a, b) => ({ t: a.t+b.t, c: a.c+b.c, i: a.i+b.i, v: a.v+b.v }));
-        const data = {
-            studentName: name,
-            totalScore: score,
-            avgTimeSpent: Math.floor(sum.t/3),
-            totalChangeCount: sum.c,
-            totalInteractAR: Math.floor(sum.i/5),
-            totalViewARTime: sum.v,
-            behaviorSummary: `ส่อง AR ทั้งหมด ${sum.v} วินาที และมีการลังเลเปลี่ยนคำตอบ ${sum.c} ครั้ง`
+    async function finishExam() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        document.getElementById('final-score').innerText = score;
+
+        const payload = {
+            type: "SUBMIT_ANALYTICS",
+            student: document.getElementById('std-name').value,
+            projectId: document.getElementById('quiz-id').value,
+            score: score + "/" + quizData.questions.length,
+            logs: logs
         };
-        fetch(scriptURL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' })
-        .then(() => alert("บันทึกสำเร็จ!"))
-        .finally(() => location.reload());
+
+        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        document.getElementById('ai-feedback').innerText = "AI สรุปพฤติกรรม: " + result.summary;
     }
 </script>
 </body>
