@@ -3,142 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Learning Analytics Quiz</title>
+    <title>AR Learning Analytics V2</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #FF5722; --secondary: #2196F3; --success: #4CAF50; }
-        body { font-family: 'Sarabun', sans-serif; margin: 0; background: #f4f7f9; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Login Screen */
-        #login-screen { position: fixed; inset: 0; background: white; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        input { padding: 15px; width: 80%; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; margin-bottom: 20px; outline: none; }
-        
-        /* Header */
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        
-        /* AR Viewer */
-        .ar-box { flex: 1.2; position: relative; background: #000; overflow: hidden; }
-        model-viewer { width: 100%; height: 100%; background: #2c3e50; }
-        .ar-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 50px; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-weight: bold; z-index: 10; cursor: pointer; }
-
-        /* Quiz Area */
-        .quiz-area { flex: 1; background: white; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); overflow-y: auto; }
-        .question { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #444; }
-        .option { background: #f8f9fa; border: 2px solid #eee; padding: 14px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
-        .option.selected { background: #e3f2fd; border-color: var(--secondary); }
-        .opt-num { background: var(--secondary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-right: 12px; font-size: 13px; }
-        
-        .submit-btn { background: var(--success); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        :root { --primary: #673AB7; --accent: #FFC107; }
+        body { font-family: 'Sarabun', sans-serif; margin: 0; background: #fafafa; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; font-size: 22px; font-weight: bold; }
+        #ar-container { height: 45vh; background: #000; position: relative; }
+        model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+        .quiz-box { padding: 20px; background: white; border-radius: 25px 25px 0 0; margin-top: -20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); min-height: 45vh; }
+        .opt { display: block; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        .opt.selected { border-color: var(--primary); background: #f3e5f5; }
+        .btn { background: #4CAF50; color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .ar-btn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); border: none; padding: 12px 20px; border-radius: 50px; font-weight: bold; z-index: 10; }
+        #login { position: fixed; inset: 0; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-<div id="login-screen">
-    <h1 style="color:var(--primary)">AR QUIZ</h1>
-    <p>ใส่ชื่อนักเรียนเพื่อเริ่มเก็บข้อมูลพฤติกรรม</p>
-    <input type="text" id="student-name" placeholder="ชื่อ - นามสกุล">
-    <button class="submit-btn" onclick="startQuiz()" style="width:85%">เข้าสู่บทเรียน</button>
+<div id="login">
+    <h2 style="color:var(--primary)">ระบบสอบ AR (แบบ 3 มิติ)</h2>
+    <input type="text" id="std-name" placeholder="ชื่อ-นามสกุลนักเรียน" style="padding:15px; width:80%; border:1px solid #ccc; border-radius:10px; margin-bottom:20px;">
+    <button class="btn" onclick="start()" style="width:85%">เริ่มทำข้อสอบ</button>
 </div>
 
-<div class="container">
-    <div class="header" id="header-text">ข้อสอบ AR: ข้อที่ 1</div>
-    
-    <div class="ar-box">
-        <model-viewer id="viewer" src="" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" camera-controls shadow-intensity="1">
-            <button slot="ar-button" class="ar-btn">📸 ส่องโลกจริง (ไจโร)</button>
-        </model-viewer>
-    </div>
+<div class="header" id="q-head">ข้อที่ 1/3</div>
 
-    <div class="quiz-area">
-        <div class="question" id="q-text">กำลังโหลดคำถาม...</div>
-        <div id="options-container"></div>
-        <button class="submit-btn" id="next-btn" onclick="nextQuestion()">ส่งคำตอบและไปข้อถัดไป</button>
-    </div>
+<div id="ar-container">
+    <model-viewer id="v" src="" ar ar-modes="webxr scene-viewer quick-look" camera-controls shadow-intensity="1">
+        <button slot="ar-button" class="ar-btn">📲 เปิดกล้องส่องโลกจริง</button>
+    </model-viewer>
+</div>
+
+<div class="quiz-box">
+    <h3 id="q-text">โหลดโจทย์...</h3>
+    <div id="opts"></div>
+    <button id="next" class="btn" onclick="handleNext()">ข้อถัดไป</button>
 </div>
 
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbx1o6owzAs0N2SSowuOAhWvrDYEd89v1ILV8kViKZ50ngrcavE1xzHilVO2K26KZqGzJA/exec';
-
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxUfoY263Dvn625Njl2oGxbFFnPrGgOSsxNkEjQxjbrRpvYDKjIj7q8fBeGVpuoeNh0MQ/exec';
     const questions = [
-        { q: "โมเดลนักบินอวกาศนี้ กำลังสวมใส่ชุดสีอะไรเป็นหลัก?", model: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", opts: ["สีขาว", "สีส้ม", "สีเงิน"], ans: "สีขาว" },
-        { q: "ถ้าสังเกตที่ด้านหลัง มีอุปกรณ์ใดติดตั้งอยู่?", model: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", opts: ["กล้องถ่ายรูป", "ถังออกซิเจน", "ร่มชูชีพ"], ans: "ถังออกซิเจน" },
-        { q: "ลักษณะท่าทางของโมเดลนี้เป็นอย่างไร?", model: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", opts: ["กำลังวิ่ง", "ยืนนิ่ง", "กำลังกระโดด"], ans: "ยืนนิ่ง" },
-        { q: "ชุดนี้เหมาะสำหรับการใช้งานในสภาพแวดล้อมใด?", model: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", opts: ["ในมหาสมุทร", "บนดวงจันทร์", "ในป่าดิบชื้น"], ans: "บนดวงจันทร์" },
-        { q: "ส่วนใดของชุดที่มีไว้เพื่อป้องกันดวงตาจากรังสี?", model: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", opts: ["ถุงมือ", "กระจกหน้ากาก (Visor)", "รองเท้าบูท"], ans: "กระจกหน้ากาก (Visor)" }
+        { q: "1. จากโมเดลนักบินอวกาศ อุปกรณ์ที่หลังคืออะไร?", m: "https://modelviewer.dev/shared-assets/models/Astronaut.glb", o: ["กระเป๋าเดินทาง", "ถังออกซิเจน", "ร่มชูชีพ"], a: "ถังออกซิเจน" },
+        { q: "2. โมเดลหัวใจมนุษย์นี้ ห้องหัวใจล่างซ้ายมีขนาดอย่างไร?", m: "https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb", o: ["ใหญ่และหนาที่สุด", "เล็กที่สุด", "ไม่มีกล้ามเนื้อ"], a: "ใหญ่และหนาที่สุด" },
+        { q: "3. วัตถุโบราณนี้ทำจากวัสดุประเภทใดเป็นหลัก?", m: "https://modelviewer.dev/shared-assets/models/Canoe.glb", o: ["เหล็ก", "ไม้", "พลาสติก"], a: "ไม้" }
     ];
 
-    let currentQ = 0, studentName = "", sequence = 0;
-    let startTime, arStart, viewARTime = 0, changeCount = 0, interactCount = 0, selected = "";
+    let current = 0, name = "", score = 0, history = [];
+    let qStart, arStart, viewARTot = 0, changeCnt = 0, interactCnt = 0, sel = "";
 
-    function startQuiz() {
-        studentName = document.getElementById('student-name').value;
-        if (!studentName) return alert("กรุณาระบุชื่อก่อนครับ");
-        document.getElementById('login-screen').style.display = 'none';
-        loadQuestion();
+    function start() {
+        name = document.getElementById('std-name').value;
+        if(!name) return alert("ใส่ชื่อด้วยจ้า");
+        document.getElementById('login').style.display = 'none';
+        loadQ();
     }
 
-    function loadQuestion() {
-        const q = questions[currentQ];
-        document.getElementById('header-text').innerText = `ข้อสอบ AR: ข้อที่ ${currentQ + 1}`;
+    function loadQ() {
+        const q = questions[current];
+        document.getElementById('q-head').innerText = `ข้อที่ ${current+1}/3`;
         document.getElementById('q-text').innerText = q.q;
-        document.getElementById('viewer').src = q.model;
-        
-        const container = document.getElementById('options-container');
-        container.innerHTML = "";
-        q.opts.forEach((opt, i) => {
-            container.innerHTML += `<div class="option" onclick="selectOption(this, '${opt}')"><div class="opt-num">${i+1}</div>${opt}</div>`;
+        document.getElementById('v').src = q.m;
+        const oDiv = document.getElementById('opts');
+        oDiv.innerHTML = "";
+        q.o.forEach(opt => {
+            oDiv.innerHTML += `<div class="opt" onclick="select(this, '${opt}')">${opt}</div>`;
         });
-
-        startTime = Date.now();
-        viewARTime = 0; changeCount = 0; interactCount = 0; selected = "";
-        sequence++;
+        qStart = Date.now();
+        viewARTot = 0; changeCnt = 0; interactCnt = 0; sel = "";
     }
 
-    function selectOption(el, val) {
-        if (selected !== "" && selected !== val) changeCount++;
-        selected = val;
-        document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    function select(el, val) {
+        if(sel && sel !== val) changeCnt++;
+        sel = val;
+        document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
         el.classList.add('selected');
     }
 
-    // ติดตามพฤติกรรม AR
-    const viewer = document.getElementById('viewer');
-    viewer.addEventListener('camera-change', () => interactCount++);
-    viewer.addEventListener('ar-status', (e) => {
-        if (e.detail.status === "session-started") arStart = Date.now();
-        if (e.detail.status === "not-presenting" && arStart) {
-            viewARTime += Math.floor((Date.now() - arStart) / 1000);
+    const v = document.getElementById('v');
+    v.addEventListener('camera-change', () => interactCnt++);
+    v.addEventListener('ar-status', (e) => {
+        if(e.detail.status === "session-started") arStart = Date.now();
+        if(e.detail.status === "not-presenting" && arStart) {
+            viewARTot += Math.floor((Date.now() - arStart)/1000);
             arStart = null;
         }
     });
 
-    async function nextQuestion() {
-        if (!selected) return alert("โปรดเลือกคำตอบก่อนครับ");
+    function handleNext() {
+        if(!sel) return alert("เลือกคำตอบก่อนนะ");
+        if(sel === questions[current].a) score++;
+        
+        history.push({ t: Math.floor((Date.now()-qStart)/1000), c: changeCnt, i: interactCnt, v: viewARTot });
 
-        const data = {
-            studentName: studentName,
-            questionNo: currentQ + 1,
-            answer: selected,
-            isCorrect: selected === questions[currentQ].ans ? "ถูก" : "ผิด",
-            timeSpent: Math.floor((Date.now() - startTime) / 1000),
-            changeCount: changeCount,
-            interactARCount: Math.floor(interactCount / 5),
-            viewARTime: viewARTime,
-            sequence: sequence
-        };
-
-        // ส่งข้อมูลเข้า Sheet
-        fetch(scriptURL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' });
-
-        currentQ++;
-        if (currentQ < questions.length) {
-            loadQuestion();
+        if(current < 2) {
+            current++; loadQ();
         } else {
-            alert("ยินดีด้วย! ทำข้อสอบครบ 5 ข้อแล้ว ข้อมูลพฤติกรรมถูกบันทึกเรียบร้อย");
-            location.reload();
+            sendData();
         }
+    }
+
+    function sendData() {
+        document.body.innerHTML = "<div style='padding:50px; text-align:center;'><h2>กำลังส่งคะแนน...</h2></div>";
+        const sum = history.reduce((a, b) => ({ t: a.t+b.t, c: a.c+b.c, i: a.i+b.i, v: a.v+b.v }));
+        const data = {
+            studentName: name,
+            totalScore: score,
+            avgTimeSpent: Math.floor(sum.t/3),
+            totalChangeCount: sum.c,
+            totalInteractAR: Math.floor(sum.i/5),
+            totalViewARTime: sum.v,
+            behaviorSummary: `ส่อง AR ทั้งหมด ${sum.v} วินาที และมีการลังเลเปลี่ยนคำตอบ ${sum.c} ครั้ง`
+        };
+        fetch(scriptURL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' })
+        .then(() => alert("บันทึกสำเร็จ!"))
+        .finally(() => location.reload());
     }
 </script>
 </body>
