@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Smart Analytics - ครูผู้สอน</title>
+    <title>AR Smart Analytics - ครูผู้สอน (v2.1)</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.9);
+            --glass: rgba(255, 255, 255, 0.95);
             --primary: #8e44ad;
             --secondary: #3498db;
-            --accent: #00d2ff;
             --success: #2ecc71;
             --dark: #2c3e50;
         }
@@ -24,9 +23,8 @@
         }
 
         /* ✨ Canva Style Animations */
-        @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(142, 68, 173, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(142, 68, 173, 0); } 100% { box-shadow: 0 0 0 0 rgba(142, 68, 173, 0); } }
-
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; animation: slideIn 0.8s ease-out; }
 
         .glass-card {
@@ -37,16 +35,14 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             border: 1px solid rgba(255, 255, 255, 0.3);
             margin-bottom: 30px;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        h1, h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        h1 { color: var(--primary); margin: 0 0 20px 0; font-size: 2rem; }
 
         input, textarea {
             width: 100%; padding: 14px 20px; border-radius: 12px;
             border: 2px solid #edf2f7; outline: none; transition: 0.3s;
             font-family: 'Sarabun', sans-serif; font-size: 16px; box-sizing: border-box;
-            background: rgba(255,255,255,0.8);
         }
         input:focus { border-color: var(--primary); background: #fff; }
 
@@ -61,24 +57,29 @@
             cursor: pointer; transition: 0.3s; text-transform: uppercase;
             display: inline-flex; align-items: center; gap: 8px; justify-content: center;
         }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3); }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-ai { background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; width: 100%; margin-top: 10px; }
-        .btn-update { background: var(--success); color: white; width: 100%; font-size: 1.2rem; margin-top: 30px; animation: pulse 2s infinite; }
+        
+        /* ปุ่มบันทึกแบบใหม่ที่มีสถานะ Loading */
+        .btn-update { 
+            background: var(--success); color: white; width: 100%; font-size: 1.2rem; 
+            margin-top: 30px; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+        }
+        .btn-update:disabled { background: #95a5a6; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .preview-pane {
-            width: 100%; height: 280px; background: radial-gradient(circle, #333 0%, #000 100%); 
-            border-radius: 16px; overflow: hidden; position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            width: 100%; height: 280px; background: radial-gradient(circle, #444 0%, #000 100%); 
+            border-radius: 16px; overflow: hidden;
         }
 
         #project-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .proj-item {
-            background: white; padding: 25px; border-radius: 20px;
+            background: white; padding: 20px; border-radius: 20px;
             border-left: 6px solid var(--primary); cursor: pointer; transition: 0.3s;
         }
-        .proj-item:hover { transform: scale(1.03); border-left-color: var(--accent); }
+        .proj-item:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -88,7 +89,7 @@
     <div class="glass-card">
         <h1>🪄 AR Intelligent Creator</h1>
         <div style="display: flex; gap: 15px;">
-            <input type="text" id="proj-name" placeholder="ชื่อโปรเจกต์ เช่น วิทยาศาสตร์ ม.1 ชุดที่ 1">
+            <input type="text" id="proj-name" placeholder="ชื่อโปรเจกต์ เช่น คอมพิวเตอร์ ม.1">
             <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width: 150px;">
             <button class="btn btn-primary" onclick="initQuiz()">🚀 สร้างชุดข้อสอบ</button>
         </div>
@@ -98,17 +99,16 @@
     <div id="quiz-area"></div>
 
     <div id="action-bar" style="display: none;">
-        <button class="btn btn-update" onclick="saveToCloud()">💾 บันทึกและอัปเดตระบบอัจฉริยะ</button>
+        <button id="save-btn" class="btn btn-update" onclick="saveToCloud()">💾 บันทึกและอัปเดตระบบอัจฉริยะ</button>
     </div>
 
     <div class="glass-card" style="margin-top: 50px;">
         <h2>📚 คลังข้อสอบของคุณครู</h2>
-        <div id="project-list">กำลังโหลดข้อมูลจาก Google Sheets...</div>
+        <div id="project-list">กำลังเชื่อมต่อฐานข้อมูล...</div>
     </div>
 </div>
 
 <script>
-    // ✅ ลิงก์ Web App และ API Key ของคุณครู
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxrAsqtoK3cuj3f27ilmEI0YRfGXNK-in8DfxDHX5RdwY7ZMzJJIxBz6X_qxQDN1Uw9yQ/exec';
     const API_KEY = 'AIzaSyD-x5oYoiNhClunMwiVE2f5Tg4IvN3V1Lg';
 
@@ -116,67 +116,71 @@
         const n = document.getElementById('q-count').value;
         const area = document.getElementById('quiz-area');
         area.innerHTML = '';
-        if(!n || n <= 0) return alert("กรุณาระบุจำนวนข้อครับ");
+        if(!n || n <= 0) return alert("ระบุจำนวนข้อก่อนครับ");
 
         for(let i=0; i<n; i++) {
             area.innerHTML += `
-                <div class="glass-card q-block" id="block-${i}">
+                <div class="glass-card q-block">
                     <div>
-                        <h3 style="color:var(--primary)">ข้อที่ ${i+1}</h3>
-                        <textarea id="q-${i}" placeholder="พิมพ์โจทย์คำถามวิเคราะห์..."></textarea>
+                        <h3 style="color:var(--primary); margin:0 0 10px 0;">ข้อที่ ${i+1}</h3>
+                        <textarea id="q-${i}" placeholder="โจทย์คำถาม..."></textarea>
                         <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก, ข, ค, ง)">
                         <input type="text" id="a-${i}" placeholder="เฉลยที่ถูกต้อง">
-                        <div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-top:10px;">
-                            <label style="font-size:14px; font-weight:600;">🤖 AI AR Search:</label>
-                            <input type="text" id="p-${i}" placeholder="ระบุสิ่งที่อยากได้ (เช่น ระบบสุริยะ 3D)" style="margin-bottom:5px;">
-                            <button class="btn btn-ai" onclick="generateModel(${i})">✨ ให้ AI ค้นหาโมเดลให้</button>
+                        <div style="background:#f0f4f8; padding:15px; border-radius:12px; margin-top:15px;">
+                            <input type="text" id="p-${i}" placeholder="AI Search: เช่น กรรไกร 3D" style="margin-bottom:8px;">
+                            <button class="btn btn-ai" onclick="generateModel(${i}, this)">✨ ค้นหาด้วย AI</button>
                         </div>
                         <input type="text" id="m-${i}" placeholder="URL ลิงก์ .glb" style="margin-top:10px" onchange="preview(${i})">
                     </div>
                     <div>
                         <div class="preview-pane">
-                            <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" auto-rotate></model-viewer>
+                            <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" auto-rotate crossorigin="anonymous"></model-viewer>
                         </div>
-                        <p style="font-size:12px; color:#666; text-align:center; margin-top:8px;">ตรวจสอบการแสดงผล AR ก่อนบันทึก</p>
                     </div>
                 </div>
             `;
         }
         document.getElementById('action-bar').style.display = 'block';
-        window.scrollTo({ top: 500, behavior: 'smooth' });
     }
 
-    async function generateModel(i) {
+    async function generateModel(i, btn) {
         const p = document.getElementById(`p-${i}`).value;
-        if(!p) return alert("กรุณาระบุหัวข้อให้ AI ครับ");
-        const btn = event.target;
+        if(!p) return alert("ระบุคำค้นหาครับ");
+        
         const originalText = btn.innerHTML;
-        btn.innerHTML = `<span class="loader"></span> กำลังค้นหาคลังโมเดล...`;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="loader"></span> กำลังค้นหา...`;
         
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Find a direct URL to a .glb 3D model from KhronosGroup for: ${p}. Return ONLY the raw URL link. No text.` }] }] })
+                body: JSON.stringify({ contents: [{ parts: [{ text: `Find a direct .glb raw URL from KhronosGroup glTF-Sample-Models for: ${p}. Return ONLY the URL string.` }] }] })
             });
             const data = await res.json();
             const url = data.candidates[0].content.parts[0].text.trim();
             document.getElementById(`m-${i}`).value = url;
             preview(i);
         } catch(e) { 
-            alert("ขออภัย AI หาโมเดลนี้ไม่เจอ ลองระบุเป็นภาษาอังกฤษดูครับ"); 
+            alert("AI หาโมเดลไม่เจอครับ ลองคำค้นหาอื่น"); 
         } finally {
+            btn.disabled = false;
             btn.innerHTML = originalText;
         }
     }
 
     function preview(i) {
-        const url = document.getElementById(`m-${i}`).value;
-        document.getElementById(`v-${i}`).src = url;
+        document.getElementById(`v-${i}`).src = document.getElementById(`m-${i}`).value;
     }
 
     async function saveToCloud() {
+        const btn = document.getElementById('save-btn');
+        if (btn.disabled) return; // กันเบิ้ล
+
         const n = document.getElementById('q-count').value;
+        const name = document.getElementById('proj-name').value;
+        if(!name) return alert("กรุณาตั้งชื่อโปรเจกต์ครับ");
+
         const qs = [];
         for(let i=0; i<n; i++) {
             qs.push({
@@ -187,20 +191,29 @@
             });
         }
         
+        // ล็อคปุ่มทันที
+        btn.disabled = true;
+        const originalBtnText = btn.innerHTML;
+        btn.innerHTML = `<span class="loader"></span> กำลังบันทึกลงฐานข้อมูล...`;
+
         const payload = {
             type: "SAVE_QUIZ",
             id: document.getElementById('current-id').value,
-            name: document.getElementById('proj-name').value,
+            name: name,
             questions: qs
         };
 
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
-            alert("🎉 บันทึกสำเร็จ! ID สำหรับนักเรียนคือ: " + result.id);
+            document.getElementById('current-id').value = result.id; // เก็บ ID ไว้กันเบิ้ล/เพื่ออัปเดต
+            alert("🎉 บันทึกสำเร็จ! รหัสสอบ: " + result.id);
             loadList();
         } catch(e) {
-            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets");
+            alert("การเชื่อมต่อผิดพลาด โปรดลองใหม่ครับ");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnText;
         }
     }
 
@@ -210,15 +223,12 @@
             const list = await res.json();
             document.getElementById('project-list').innerHTML = list.map(p => `
                 <div class="proj-item" onclick="edit('${p.id}')">
-                    <h3 style="margin:0 0 10px 0; color:var(--primary)">${p.name}</h3>
-                    <p style="margin:0; font-size:14px; color:#666;">
-                        🆔 รหัส: <b>${p.id}</b><br>
-                        📝 จำนวน: ${p.count} ข้อ
-                    </p>
+                    <h3 style="margin:0; color:var(--primary)">${p.name}</h3>
+                    <small>รหัส: ${p.id} | จำนวน ${p.count} ข้อ</small>
                 </div>
             `).join('');
         } catch(e) {
-            document.getElementById('project-list').innerHTML = "ยังไม่พบข้อมูลโปรเจกต์";
+            document.getElementById('project-list').innerHTML = "ยังไม่มีข้อมูลโปรเจกต์";
         }
     }
 
