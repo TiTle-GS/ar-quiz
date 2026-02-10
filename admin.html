@@ -140,20 +140,23 @@
     }
 
     // 📤 ฟังก์ชันอัปโหลดไฟล์จากเครื่อง (Base64)
-    function handleFileUpload(i, input) {
-        const file = input.files[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) return alert("ไฟล์ต้องไม่เกิน 2MB ครับ");
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById(`m-${i}`).value = e.target.result;
-                preview(i);
-                alert("อัปโหลดไฟล์สำเร็จ!");
-            };
-            reader.readAsDataURL(file);
+  function handleFileUpload(i, input) {
+    const file = input.files[0];
+    if (file) {
+        // เปลี่ยนจาก 2 เป็น 5 MB (5 * 1024 * 1024 bytes)
+        if (file.size > 5 * 1024 * 1024) { 
+            alert("ไฟล์ใหญ่เกิน 5MB ครับ แนะนำให้ใช้การฝากไฟล์ลิงก์ URL แทน");
+            return;
         }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById(`m-${i}`).value = e.target.result;
+            preview(i);
+            alert("อัปโหลดไฟล์ขนาด " + (file.size/1024/1024).toFixed(2) + " MB สำเร็จ!");
+        };
+        reader.readAsDataURL(file);
     }
-
+}
     function preview(i) { document.getElementById(`v-${i}`).src = document.getElementById(`m-${i}`).value; }
 
     async function saveToCloud() {
