@@ -1,667 +1,307 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Smart Admin v9.0 - Analytics Dashboard</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --p: #6366f1; 
-            --s: #8b5cf6; 
-            --g: #10b981; 
-            --r: #ef4444;
-            --y: #f59e0b;
-            --bg: #f8fafc; 
-        }
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Sarabun', sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0; 
-            padding: 20px; 
-            color: #1e293b; 
-            min-height: 100vh;
-        }
-        .container { max-width: 1400px; margin: 0 auto; }
-        
-        /* Tab Navigation */
-        .tab-nav { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 20px; 
-            background: rgba(255,255,255,0.1); 
-            padding: 10px; 
-            border-radius: 20px; 
-            backdrop-filter: blur(10px);
-        }
-        .tab-btn { 
-            flex: 1; 
-            padding: 15px 20px; 
-            border-radius: 14px; 
-            border: none; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            font-family: 'Sarabun'; 
-            font-size: 16px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
-        .tab-btn.active { 
-            background: white; 
-            color: var(--p); 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        .glass-card { 
-            background: rgba(255,255,255,0.95); 
-            backdrop-filter: blur(10px); 
-            border-radius: 24px; 
-            padding: 25px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            margin-bottom: 25px; 
-            border: 1px solid rgba(255,255,255,0.5); 
-        }
-        .btn { 
-            padding: 12px 24px; 
-            border-radius: 14px; 
-            border: none; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 8px; 
-            font-family: 'Sarabun'; 
-            font-size: 14px; 
-            justify-content: center; 
-        }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: linear-gradient(135deg, var(--p), var(--s)); color: white; }
-        .btn-success { background: var(--g); color: white; }
-        .btn-danger { background: var(--r); color: white; }
-        .btn-warning { background: var(--y); color: white; }
-        .btn-check { background: #4f46e5; color: white; width: 100%; margin-top: 10px; }
-        .btn-update { background: var(--g); color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; padding: 18px; }
-        
-        .q-block { 
-            display: grid; 
-            grid-template-columns: 1fr 350px; 
-            gap: 25px; 
-            padding: 25px; 
-            background: white; 
-            border-radius: 20px; 
-            margin-bottom: 20px; 
-            border: 1px solid #e2e8f0; 
-        }
-        .preview-pane { 
-            background: #000; 
-            border-radius: 18px; 
-            height: 320px; 
-            overflow: hidden; 
-            border: 4px solid #f1f5f9; 
-            position: relative; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .drive-box { 
-            background: #f0fdf4; 
-            padding: 15px; 
-            border-radius: 15px; 
-            margin-top: 15px; 
-            border: 1px dashed var(--g); 
-        }
-        input, textarea, select { 
-            width: 100%; 
-            padding: 12px; 
-            border-radius: 12px; 
-            border: 1px solid #ddd; 
-            margin-top: 5px; 
-            font-family: 'Sarabun'; 
-            box-sizing: border-box; 
-        }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--p);
-        }
-        
-        .loader-ui { 
-            display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            color: white; 
-            gap: 15px; 
-            z-index: 10; 
-            position: absolute; 
-        }
-        .spinner { 
-            border: 4px solid rgba(255,255,255,0.1); 
-            border-top: 4px solid var(--p); 
-            border-radius: 50%; 
-            width: 40px; 
-            height: 40px; 
-            animation: spin 1s linear infinite; 
-        }
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-        }
-
-        /* Analytics Styles */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, var(--p), var(--s));
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 10px 0;
-        }
-        .stat-label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .student-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            border-left: 5px solid var(--p);
-            transition: 0.3s;
-        }
-        .student-card:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateX(5px);
-        }
-        .student-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--p);
-            margin-bottom: 10px;
-        }
-        .student-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .mini-stat {
-            text-align: center;
-            padding: 10px;
-            background: #f8fafc;
-            border-radius: 10px;
-        }
-        .mini-stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--p);
-        }
-        .mini-stat-label {
-            font-size: 11px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .learner-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        .badge-explorer { background: #dbeafe; color: #1e40af; }
-        .badge-confident { background: #d1fae5; color: #065f46; }
-        .badge-hesitant { background: #fed7aa; color: #92400e; }
-        .badge-strategic { background: #e9d5ff; color: #6b21a8; }
-        .badge-impulsive { background: #fecaca; color: #991b1b; }
-        .badge-standard { background: #e2e8f0; color: #475569; }
-
-        .quiz-selector {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AR Quiz — Admin</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; background:#f6f7fb; color:#222; margin:0; padding:20px; }
+    .wrap { max-width:1100px; margin:0 auto; background:#fff; padding:18px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    h2 { margin-top:0; }
+    .grid { display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
+    .card { padding:12px; border-radius:8px; background:#fbfdff; border:1px solid #eef5ff; }
+    input, textarea, select, button { width:100%; padding:8px; margin-top:8px; box-sizing:border-box; }
+    .small { font-size:13px; color:#666; }
+    .quiz-list { max-height:420px; overflow:auto; }
+    .quiz-item { padding:8px; border-bottom:1px solid #eef5ff; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .btn { padding:8px 10px; border:none; border-radius:6px; cursor:pointer; }
+    .btn-primary { background:#2b7cff; color:#fff; }
+    .btn-danger { background:#ff6b6b; color:#fff; }
+    .btn-ghost { background:#f1f5fb; color:#333; }
+  </style>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
-
-<div class="container">
-    <!-- Tab Navigation -->
-    <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('create')">✏️ สร้างข้อสอบ</button>
-        <button class="tab-btn" onclick="switchTab('manage')">📚 จัดการข้อสอบ</button>
-        <button class="tab-btn" onclick="switchTab('analytics')">📊 วิเคราะห์ผลการทำข้อสอบ</button>
-    </div>
-
-    <!-- Tab 1: Create Quiz -->
-    <div id="tab-create" class="tab-content active">
-        <div class="glass-card">
-            <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Creator v9.0</h2>
-            <div style="display: flex; gap: 12px;">
-                <input type="text" id="proj-name" placeholder="ชื่อวิชา / ชุดข้อสอบ">
-                <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:120px;">
-                <button class="btn btn-primary" onclick="initQuiz()">🚀 เริ่มสร้างข้อสอบ</button>
-            </div>
-            <input type="hidden" id="current-id">
+  <div class="wrap">
+    <h2>AR Quiz — Admin</h2>
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h3>สร้าง / แก้ไขชุดข้อสอบ</h3>
+          <label>ชื่อชุดข้อสอบ</label>
+          <input id="quiz-name" placeholder="เช่น วิทย์-ระบบสุริยะ-ม.1" />
+          <label>จำนวนข้อ</label>
+          <input id="quiz-count" type="number" min="1" value="4" />
+          <div id="questions-area" style="margin-top:12px;"></div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button id="save-quiz" class="btn btn-primary">💾 บันทึกชุดข้อสอบ</button>
+            <button id="clear-form" class="btn btn-ghost">ล้าง</button>
+          </div>
+          <p class="small">หมายเหตุ: ใช้ลิงก์ไฟล์ .glb ที่เป็น direct download หรือ raw.githubusercontent.com</p>
         </div>
 
-        <div id="quiz-area"></div>
-        <div id="action-bar" style="display:none; margin-bottom: 40px;">
-            <button id="save-btn" class="btn btn-update" onclick="saveToCloud()">💾 บันทึกชุดข้อสอบลง Google Sheets</button>
+        <div class="card" style="margin-top:12px;">
+          <h3>ทดสอบโมเดล AR (ตัวอย่าง)</h3>
+          <label>วางลิงก์ .glb</label>
+          <input id="test-model-url" placeholder="https://raw.githubusercontent.com/..." />
+          <div style="margin-top:8px;">
+            <model-viewer id="admin-ar" src="" camera-controls style="width:100%; height:240px; background:#000;"></model-viewer>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="test-load" class="btn btn-primary">โหลดโมเดล</button>
+            <button id="convert-drive" class="btn btn-ghost">แปลง Google Drive → Direct</button>
+          </div>
+          <p class="small">ถ้าโมเดลหมุนติ้วๆ ให้ใช้ GitHub raw หรือแปลงเป็น direct download ตามคู่มือ</p>
         </div>
-    </div>
+      </div>
 
-    <!-- Tab 2: Manage Quiz -->
-    <div id="tab-manage" class="tab-content">
-        <div class="glass-card">
-            <h2 style="margin-top:0;">📚 คลังข้อสอบของคุณครู</h2>
-            <div id="project-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
+      <div>
+        <div class="card">
+          <h3>รายการชุดข้อสอบ</h3>
+          <div class="quiz-list" id="quiz-list"></div>
         </div>
-    </div>
 
-    <!-- Tab 3: Analytics -->
-    <div id="tab-analytics" class="tab-content">
-        <div class="glass-card">
-            <h2 style="margin-top:0; color:var(--p);">📊 วิเคราะห์ผลการทำข้อสอบ</h2>
-            
-            <div class="quiz-selector">
-                <label style="font-weight:600; margin-bottom:10px; display:block;">เลือกชุดข้อสอบ:</label>
-                <select id="analytics-quiz-select" onchange="loadAnalytics()" style="width:100%;">
-                    <option value="">-- เลือกชุดข้อสอบ --</option>
-                </select>
-            </div>
-
-            <div id="analytics-content" style="display:none;">
-                <!-- Summary Stats -->
-                <div class="stats-grid" id="summary-stats"></div>
-
-                <!-- Student List -->
-                <h3 style="color:var(--p);">📋 รายละเอียดนักเรียนแต่ละคน</h3>
-                <div id="student-list"></div>
-            </div>
-
-            <div id="analytics-empty" style="text-align:center; padding:60px; color:#666;">
-                <p style="font-size:48px; margin:0;">📊</p>
-                <p>เลือกชุดข้อสอบเพื่อดูผลการวิเคราะห์</p>
-            </div>
+        <div class="card" style="margin-top:12px;">
+          <h3>จัดการ / วิเคราะห์</h3>
+          <label>เลือกชุดข้อสอบ</label>
+          <select id="select-quiz"></select>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="view-analytics" class="btn btn-primary">ดู Analytics</button>
+            <button id="delete-quiz" class="btn btn-danger">ลบชุดข้อสอบ</button>
+          </div>
+          <div id="analytics-area" style="margin-top:12px;"></div>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec';
+  <script>
+    // -------------------------
+    // Configuration
+    // -------------------------
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec'; // <-- เปลี่ยนเป็น Web App URL ของคุณ
 
-    window.onload = () => {
-        loadList();
-        loadQuizListForAnalytics();
-    };
+    // -------------------------
+    // Helpers
+    // -------------------------
+    function $(id){ return document.getElementById(id); }
+    function el(tag, cls){ const e = document.createElement(tag); if(cls) e.className = cls; return e; }
 
-    // ========== TAB SWITCHING ==========
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        event.target.classList.add('active');
-        document.getElementById(`tab-${tab}`).classList.add('active');
-        
-        if (tab === 'manage') {
-            loadList();
-        } else if (tab === 'analytics') {
-            loadQuizListForAnalytics();
-        }
+    // -------------------------
+    // Build question inputs
+    // -------------------------
+    function buildQuestions(n, existing = []) {
+      const area = $('questions-area');
+      area.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        const q = existing[i] || { q: '', o: ['', '', '', ''], a: '', m: '' };
+        const wrapper = el('div');
+        wrapper.style.borderTop = '1px solid #eef5ff';
+        wrapper.style.paddingTop = '8px';
+        wrapper.innerHTML = `
+          <label style="font-weight:600">ข้อที่ ${i+1}</label>
+          <input class="q-text" placeholder="คำถาม" value="${escapeHtml(q.q)}" />
+          <label>ตัวเลือก (คั่นบรรทัด)</label>
+          <textarea class="q-opts" rows="3" placeholder="แต่ละบรรทัดเป็นตัวเลือก">${escapeHtml((q.o||[]).join('\n'))}</textarea>
+          <label>คำตอบที่ถูกต้อง (พิมพ์ข้อความตรงกับตัวเลือก)</label>
+          <input class="q-ans" placeholder="คำตอบที่ถูกต้อง" value="${escapeHtml(q.a)}" />
+          <label>ลิงก์โมเดล .glb (direct/raw)</label>
+          <input class="q-model" placeholder="https://..." value="${escapeHtml(q.m)}" />
+        `;
+        area.appendChild(wrapper);
+      }
     }
 
-    // ========== CREATE QUIZ FUNCTIONS ==========
-    function initQuiz() {
-        const n = document.getElementById('q-count').value;
-        const area = document.getElementById('quiz-area');
-        if(!n || n <= 0) return alert("โปรดระบุจำนวนข้อ");
-        
-        area.innerHTML = '';
-        for(let i=0; i<n; i++) {
-            area.innerHTML += `
-                <div class="glass-card q-block">
-                    <div>
-                        <h3 style="color:var(--p)">ข้อที่ ${i+1}</h3>
-                        <label style="font-weight:600; font-size:14px;">คำถาม:</label>
-                        <textarea id="q-${i}" placeholder="โจทย์คำถาม..." rows="3"></textarea>
-                        
-                        <label style="font-weight:600; font-size:14px; margin-top:15px; display:block;">ตัวเลือก:</label>
-                        <input type="text" id="o-${i}" placeholder="ก,ข,ค,ง (แยกด้วยคอมม่า)">
-                        
-                        <label style="font-weight:600; font-size:14px; margin-top:15px; display:block;">คำตอบที่ถูกต้อง:</label>
-                        <input type="text" id="a-${i}" placeholder="เช่น ก หรือ ข">
-                        
-                        <div class="drive-box">
-                            <label style="font-weight:600; color:var(--g); font-size:14px;">🔗 ลิงก์ Google Drive (โมเดล 3D)</label>
-                            <input type="text" id="raw-link-${i}" placeholder="วางลิงก์จากปุ่ม Share">
-                            <input type="hidden" id="m-${i}">
-                            <button class="btn btn-check" id="btn-check-${i}" onclick="processModel(${i})">🔍 ตรวจสอบลิงก์โมเดล</button>
-                        </div>
-                    </div>
-                    <div class="preview-pane" id="pane-${i}">
-                        <div class="loader-ui" id="loader-${i}">
-                            <div class="spinner"></div>
-                            <span>กำลังโหลดจาก Drive...</span>
-                        </div>
-                        <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
-                    </div>
-                </div>`;
-        }
-        document.getElementById('action-bar').style.display = 'block';
-        window.scrollTo({ top: document.getElementById('quiz-area').offsetTop - 100, behavior: 'smooth' });
-    }
+    function escapeHtml(s){ if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-    function processModel(i) {
-        const rawUrl = document.getElementById(`raw-link-${i}`).value;
-        const btn = document.getElementById(`btn-check-${i}`);
-        const loader = document.getElementById(`loader-${i}`);
-        const viewer = document.getElementById(`v-${i}`);
+    // initial
+    buildQuestions(parseInt($('quiz-count').value,10) || 4);
 
-        if (!rawUrl.includes("drive.google.com")) {
-            return alert("โปรดวางลิงก์จาก Google Drive เท่านั้นครับ");
-        }
+    $('quiz-count').addEventListener('change', () => {
+      const n = Math.max(1, parseInt($('quiz-count').value,10) || 1);
+      buildQuestions(n);
+    });
 
-        loader.style.display = 'flex';
-        btn.disabled = true;
-        btn.innerHTML = "⌛ กำลังดึงโมเดล...";
+    // -------------------------
+    // Save quiz
+    // -------------------------
+    $('save-quiz').addEventListener('click', async () => {
+      const name = $('quiz-name').value.trim();
+      if (!name) return alert('กรุณากรอกชื่อชุดข้อสอบ');
+      const qEls = document.querySelectorAll('#questions-area > div');
+      const questions = [];
+      qEls.forEach((wrap, idx) => {
+        const qText = wrap.querySelector('.q-text').value.trim();
+        const opts = wrap.querySelector('.q-opts').value.split('\n').map(s=>s.trim()).filter(Boolean);
+        const ans = wrap.querySelector('.q-ans').value.trim();
+        const model = wrap.querySelector('.q-model').value.trim();
+        questions.push({ q: qText, o: opts, a: ans, m: model });
+      });
 
-        try {
-            const parts = rawUrl.split('/d/');
-            if (parts.length > 1) {
-                const fileId = parts[1].split('/')[0].split('?')[0].split('&')[0];
-                const directLink = `https://drive.google.com/uc?id=${fileId}`;
-                
-                document.getElementById(`m-${i}`).value = directLink;
-                viewer.src = directLink;
-
-                viewer.addEventListener('load', () => {
-                    loader.style.display = 'none';
-                    btn.disabled = false;
-                    btn.innerHTML = "✅ พร้อมใช้งานแล้ว";
-                    btn.style.background = "var(--g)";
-                });
-
-                viewer.addEventListener('error', () => {
-                    loader.style.display = 'none';
-                    btn.disabled = false;
-                    btn.innerHTML = "❌ โหลดไม่สำเร็จ";
-                    btn.style.background = "#ef4444";
-                    alert("โมเดลไม่ขึ้น! 1.เช็คสิทธิ์แชร์เป็น 'Anyone with the link' 2.ไฟล์ต้องเป็น .glb");
-                });
-            }
-        } catch (e) {
-            loader.style.display = 'none';
-            btn.disabled = false;
-            alert("ลิงก์ไม่ถูกต้อง");
-        }
-    }
-
-    async function saveToCloud() {
-        const btn = document.getElementById('save-btn');
-        const count = document.getElementById('q-count').value;
-        const name = document.getElementById('proj-name').value;
-        
-        if (!name) return alert("โปรดระบุชื่อชุดข้อสอบ");
-        
-        const questions = [];
-        for(let i=0; i<count; i++) {
-            const mVal = document.getElementById(`m-${i}`).value;
-            if(!mVal) return alert(`โปรดตรวจสอบโมเดลในข้อที่ ${i+1} ก่อนบันทึกครับ`);
-            
-            questions.push({
-                q: document.getElementById(`q-${i}`).value,
-                o: document.getElementById(`o-${i}`).value.split(',').map(x => x.trim()),
-                a: document.getElementById(`a-${i}`).value,
-                m: mVal
-            });
-        }
-        
-        btn.disabled = true; 
-        btn.innerHTML = "💾 กำลังบันทึก...";
-        
-        try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    type: "SAVE_QUIZ",
-                    id: document.getElementById('current-id').value,
-                    name: name,
-                    questions: questions
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.status === "Success") {
-                alert("✅ บันทึกสำเร็จ! รหัสข้อสอบ: " + result.id);
-                document.getElementById('current-id').value = result.id;
-                loadList();
-            }
-        } catch(e) { 
-            alert("❌ บันทึกไม่สำเร็จ กรุณาลองอีกครั้ง"); 
-        }
-        
-        btn.disabled = false; 
-        btn.innerHTML = "💾 บันทึกชุดข้อสอบลง Google Sheets";
-    }
-
-    // ========== MANAGE QUIZ FUNCTIONS ==========
-    async function loadList() {
-        try {
-            const res = await fetch(SCRIPT_URL + "?action=list&t=" + Date.now());
-            const list = await res.json();
-            
-            const html = list.map(p => `
-                <div class="glass-card" style="margin:0; border-left:6px solid var(--p); padding:20px;">
-                    <h4 style="margin:0 0 10px 0; color:var(--p);">${p.name}</h4>
-                    <p style="margin:5px 0; font-size:14px; color:#666;">
-                        📝 ${p.count} ข้อ | 🆔 ${p.id}
-                    </p>
-                    <div style="display:flex; gap:10px; margin-top:15px;">
-                        <button class="btn btn-primary" style="flex:1; font-size:13px;" onclick="editQuiz('${p.id}')">✏️ แก้ไข</button>
-                        <button class="btn btn-danger" style="flex:1; font-size:13px;" onclick="deleteQuiz('${p.id}')">🗑️ ลบ</button>
-                    </div>
-                </div>`).join('');
-            
-            document.getElementById('project-list').innerHTML = html || '<p style="text-align:center; color:#666;">ยังไม่มีข้อสอบ</p>';
-        } catch(e) { 
-            console.log("List error", e); 
-        }
-    }
-
-    async function editQuiz(id) {
-        switchTab('create');
-        document.querySelector('.tab-btn').click();
-        
-        const res = await fetch(SCRIPT_URL + "?action=getQuiz&id=" + id);
+      const payload = { type: 'SAVE_QUIZ', id: null, name: name, questions: questions };
+      try {
+        const res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
         const data = await res.json();
-        
-        document.getElementById('current-id').value = id;
-        document.getElementById('proj-name').value = data.name;
-        document.getElementById('q-count').value = data.questions.length;
-        
-        initQuiz();
-        
-        setTimeout(() => {
-            data.questions.forEach((q, i) => {
-                document.getElementById(`q-${i}`).value = q.q;
-                document.getElementById(`o-${i}`).value = q.o.join(',');
-                document.getElementById(`a-${i}`).value = q.a;
-                document.getElementById(`m-${i}`).value = q.m;
-                document.getElementById(`raw-link-${i}`).value = q.m;
-                document.getElementById(`v-${i}`).src = q.m;
-                document.getElementById(`btn-check-${i}`).innerHTML = "✅ พร้อมใช้งานแล้ว";
-                document.getElementById(`btn-check-${i}`).style.background = "var(--g)";
-            });
-        }, 500);
+        if (data && data.status) {
+          alert('บันทึกสำเร็จ: ' + data.id);
+          loadQuizzes();
+        } else {
+          alert('บันทึกไม่สำเร็จ');
+        }
+      } catch (e) {
+        console.error(e);
+        alert('เกิดข้อผิดพลาดขณะบันทึก');
+      }
+    });
+
+    // -------------------------
+    // Load quizzes list
+    // -------------------------
+    async function loadQuizzes() {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=list&t=${Date.now()}`);
+        const data = await res.json();
+        const list = $('quiz-list');
+        const sel = $('select-quiz');
+        list.innerHTML = '';
+        sel.innerHTML = '<option value="">-- เลือกชุดข้อสอบ --</option>';
+        (data || []).forEach(q => {
+          const item = el('div','quiz-item');
+          const left = el('div');
+          left.innerHTML = `<strong>${q.name}</strong><div class="small">ID: ${q.id} • ข้อ: ${q.count}</div>`;
+          const right = el('div');
+          const btnEdit = el('button','btn btn-ghost'); btnEdit.textContent = 'แก้ไข';
+          const btnDel = el('button','btn btn-danger'); btnDel.textContent = 'ลบ';
+          btnEdit.addEventListener('click', ()=> loadQuizToForm(q.id));
+          btnDel.addEventListener('click', ()=> deleteQuiz(q.id));
+          right.appendChild(btnEdit); right.appendChild(btnDel);
+          item.appendChild(left); item.appendChild(right);
+          list.appendChild(item);
+
+          const opt = el('option'); opt.value = q.id; opt.textContent = `${q.name} (${q.id})`;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    loadQuizzes();
+
+    // -------------------------
+    // Load single quiz to form (edit)
+    // -------------------------
+    async function loadQuizToForm(id) {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getQuiz&id=${encodeURIComponent(id)}&t=${Date.now()}`);
+        const data = await res.json();
+        if (data && data.id) {
+          $('quiz-name').value = data.name || '';
+          const qs = data.questions || [];
+          $('quiz-count').value = qs.length || 1;
+          buildQuestions(qs.length || 1, qs);
+          // store id on save button for update
+          $('save-quiz').dataset.editId = data.id;
+          alert('โหลดข้อมูลชุดข้อสอบเรียบร้อย สามารถแก้ไขแล้วกดบันทึก');
+        } else {
+          alert('ไม่พบชุดข้อสอบ');
+        }
+      } catch (e) {
+        console.error(e);
+        alert('โหลดข้อมูลล้มเหลว');
+      }
     }
 
+    // -------------------------
+    // Delete quiz
+    // -------------------------
     async function deleteQuiz(id) {
-        if (!confirm("ต้องการลบชุดข้อสอบนี้ใช่หรือไม่?")) return;
-        
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ type: "DELETE_QUIZ", id: id })
-            });
-            alert("ลบสำเร็จ");
-            loadList();
-        } catch(e) {
-            alert("ลบไม่สำเร็จ");
+      if (!confirm('ต้องการลบชุดข้อสอบนี้จริงหรือไม่?')) return;
+      try {
+        const payload = { type: 'DELETE_QUIZ', id: id };
+        const res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data && data.status) {
+          alert('ลบเรียบร้อย');
+          loadQuizzes();
+        } else {
+          alert('ลบไม่สำเร็จ');
         }
+      } catch (e) {
+        console.error(e);
+        alert('เกิดข้อผิดพลาดขณะลบ');
+      }
     }
 
-    // ========== ANALYTICS FUNCTIONS ==========
-    async function loadQuizListForAnalytics() {
-        try {
-            const res = await fetch(SCRIPT_URL + "?action=list&t=" + Date.now());
-            const list = await res.json();
-            
-            const select = document.getElementById('analytics-quiz-select');
-            select.innerHTML = '<option value="">-- เลือกชุดข้อสอบ --</option>';
-            
-            list.forEach(p => {
-                select.innerHTML += `<option value="${p.id}">${p.name} (${p.count} ข้อ)</option>`;
-            });
-        } catch(e) {
-            console.log("Error loading quiz list", e);
+    // -------------------------
+    // View analytics
+    // -------------------------
+    $('view-analytics').addEventListener('click', async () => {
+      const id = $('select-quiz').value;
+      if (!id) return alert('เลือกชุดข้อสอบก่อน');
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getQuizStatistics&id=${encodeURIComponent(id)}&t=${Date.now()}`);
+        const data = await res.json();
+        const area = $('analytics-area');
+        if (data.error) {
+          area.innerHTML = `<div class="small">ไม่มีข้อมูล</div>`;
+          return;
         }
-    }
+        area.innerHTML = `
+          <div><strong>นักเรียนทั้งหมด:</strong> ${data.totalStudents}</div>
+          <div><strong>คะแนนเฉลี่ย:</strong> ${data.avgScore}</div>
+          <div><strong>ประเภทผู้เรียน:</strong> ${Object.entries(data.learnerTypes).map(([k,v])=>`${k}: ${v}`).join(', ')}</div>
+        `;
+      } catch (e) {
+        console.error(e);
+        alert('ดึงสถิติไม่สำเร็จ');
+      }
+    });
 
-    async function loadAnalytics() {
-        const quizId = document.getElementById('analytics-quiz-select').value;
-        
-        if (!quizId) {
-            document.getElementById('analytics-content').style.display = 'none';
-            document.getElementById('analytics-empty').style.display = 'block';
-            return;
-        }
-        
-        try {
-            const res = await fetch(SCRIPT_URL + `?action=getAnalytics&id=${quizId}&t=${Date.now()}`);
-            const data = await res.json();
-            
-            if (data.length === 0) {
-                document.getElementById('analytics-content').style.display = 'none';
-                document.getElementById('analytics-empty').innerHTML = `
-                    <p style="font-size:48px; margin:0;">📊</p>
-                    <p>ยังไม่มีนักเรียนทำข้อสอบชุดนี้</p>
-                `;
-                document.getElementById('analytics-empty').style.display = 'block';
-                return;
-            }
-            
-            document.getElementById('analytics-empty').style.display = 'none';
-            document.getElementById('analytics-content').style.display = 'block';
-            
-            // Calculate summary stats
-            const totalStudents = data.length;
-            const avgScore = data.reduce((sum, s) => sum + parseFloat(s.score.split('/')[0]), 0) / totalStudents;
-            const avgTime = data.reduce((sum, s) => sum + parseFloat(s.totalTime), 0) / totalStudents;
-            const avgInteracts = data.reduce((sum, s) => sum + parseInt(s.totalInteracts), 0) / totalStudents;
-            
-            // Learner type distribution
-            const learnerTypes = {};
-            data.forEach(s => {
-                const type = s.learnerType || "Standard Learner";
-                learnerTypes[type] = (learnerTypes[type] || 0) + 1;
-            });
-            const mostCommonType = Object.keys(learnerTypes).reduce((a, b) => learnerTypes[a] > learnerTypes[b] ? a : b);
-            
-            // Display summary stats
-            document.getElementById('summary-stats').innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-label">จำนวนนักเรียนทั้งหมด</div>
-                    <div class="stat-value">${totalStudents}</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, var(--g), #34d399);">
-                    <div class="stat-label">คะแนนเฉลี่ย</div>
-                    <div class="stat-value">${avgScore.toFixed(1)}</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, var(--y), #fbbf24);">
-                    <div class="stat-label">เวลาเฉลี่ย (วินาที)</div>
-                    <div class="stat-value">${avgTime.toFixed(0)}</div>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
-                    <div class="stat-label">การโต้ตอบ AR เฉลี่ย</div>
-                    <div class="stat-value">${avgInteracts.toFixed(0)}</div>
-                </div>
-            `;
-            
-            // Display student list
-            const studentHtml = data.map(s => {
-                const scoreNum = parseFloat(s.score.split('/')[0]);
-                const scoreTotal = parseFloat(s.score.split('/')[1]);
-                const percentage = (scoreNum / scoreTotal * 100).toFixed(0);
-                
-                let badgeClass = 'badge-standard';
-                if (s.learnerType.includes('Explorer')) badgeClass = 'badge-explorer';
-                else if (s.learnerType.includes('Confident')) badgeClass = 'badge-confident';
-                else if (s.learnerType.includes('Hesitant')) badgeClass = 'badge-hesitant';
-                else if (s.learnerType.includes('Strategic')) badgeClass = 'badge-strategic';
-                else if (s.learnerType.includes('Impulsive')) badgeClass = 'badge-impulsive';
-                
-                return `
-                    <div class="student-card">
-                        <div class="student-name">👤 ${s.studentName}</div>
-                        <div class="student-stats">
-                            <div class="mini-stat">
-                                <div class="mini-stat-value">${s.score}</div>
-                                <div class="mini-stat-label">คะแนน (${percentage}%)</div>
-                            </div>
-                            <div class="mini-stat">
-                                <div class="mini-stat-value">${parseFloat(s.totalTime).toFixed(0)}</div>
-                                <div class="mini-stat-label">เวลารวม (วินาที)</div>
-                            </div>
-                            <div class="mini-stat">
-                                <div class="mini-stat-value">${s.totalChanges}</div>
-                                <div class="mini-stat-label">เปลี่ยนคำตอบ</div>
-                            </div>
-                            <div class="mini-stat">
-                                <div class="mini-stat-value">${s.totalInteracts}</div>
-                                <div class="mini-stat-label">โต้ตอบ AR</div>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="learner-badge ${badgeClass}">${s.learnerType}</span>
-                            <span style="margin-left:10px; font-size:12px; color:#666;">
-                                🎯 AR Score: ${s.arEngagementScore}/100 | 
-                                💪 Confidence: ${s.confidenceLevel}
-                            </span>
-                        </div>
-                        <div style="background:#f8fafc; padding:15px; border-radius:10px; margin-top:15px;">
-                            <strong style="color:var(--p);">AI Summary:</strong>
-                            <p style="margin:10px 0 0 0; line-height:1.6;">${s.aiSummary}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            document.getElementById('student-list').innerHTML = studentHtml;
-            
-        } catch(e) {
-            console.log("Error loading analytics", e);
-            alert("ไม่สามารถโหลดข้อมูลได้");
-        }
-    }
-</script>
+    // -------------------------
+    // Test model load & convert Drive link
+    // -------------------------
+    $('test-load').addEventListener('click', () => {
+      const url = $('test-model-url').value.trim();
+      if (!url) return alert('วางลิงก์โมเดลก่อน');
+      const mv = document.getElementById('admin-ar');
+      try {
+        mv.setAttribute('src', url);
+        if (typeof mv.load === 'function') mv.load();
+      } catch (e) {
+        console.warn(e);
+      }
+    });
+
+    $('convert-drive').addEventListener('click', () => {
+      const url = $('test-model-url').value.trim();
+      if (!url) return alert('วางลิงก์ Google Drive ก่อน');
+      // try to extract file id
+      const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+      if (m && m[1]) {
+        const id = m[1];
+        const direct = `https://drive.google.com/uc?export=download&id=${id}`;
+        $('test-model-url').value = direct;
+        alert('แปลงลิงก์เป็น direct download แล้ว (วางลิงก์นี้ในช่องโมเดลของข้อสอบ)');
+      } else {
+        alert('ไม่พบ File ID ในลิงก์ กรุณาใช้ลิงก์แบบ https://drive.google.com/file/d/FILE_ID/view');
+      }
+    });
+
+    // -------------------------
+    // Clear form
+    // -------------------------
+    $('clear-form').addEventListener('click', () => {
+      if (!confirm('ล้างฟอร์ม?')) return;
+      $('quiz-name').value = '';
+      $('quiz-count').value = 4;
+      buildQuestions(4);
+      delete $('save-quiz').dataset.editId;
+    });
+
+    // -------------------------
+    // On load
+    // -------------------------
+    loadQuizzes();
+  </script>
 </body>
 </html>
