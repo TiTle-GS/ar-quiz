@@ -111,7 +111,7 @@
                 });
 
                 if (res.ok) {
-                    const rawUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/master/${fileName}`;
+                    const rawUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${fileName}`;
                     document.getElementById(`m-${i}`).value = rawUrl;
                     preview(i);
                     alert("อัปโหลดสำเร็จ! ไฟล์ถูกเก็บใน GitHub เรียบร้อย");
