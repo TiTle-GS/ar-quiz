@@ -151,3 +151,50 @@
         }
         btn.disabled = true; btn.innerHTML = "💾 กำลังบันทึกลงฐานข้อมูล...";
         try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: "SAVE_QUIZ",
+                    id: document.getElementById('current-id').value,
+                    name: document.getElementById('proj-name').value,
+                    questions: questions
+                })
+            });
+            alert("บันทึกสำเร็จ! ข้อสอบพร้อมใช้งานแล้วครับ");
+            loadList();
+        } catch(e) { alert("บันทึกไม่สำเร็จ"); }
+        btn.disabled = false; btn.innerHTML = "💾 บันทึกชุดข้อสอบลง Google Sheets";
+    }
+
+    async function loadList() {
+        const res = await fetch(SCRIPT_URL + "?action=list&t=" + Date.now());
+        const list = await res.json();
+        document.getElementById('project-list').innerHTML = list.map(p => `
+            <div class="glass-card" style="margin:0; border-left:6px solid var(--p); padding:15px;">
+                <h4 style="margin:0;">${p.name}</h4>
+                <button class="btn" style="background:#f1f5f9; width:100%; margin-top:10px;" onclick="edit('${p.id}')">📝 แก้ไขข้อสอบ</button>
+            </div>`).join('');
+    }
+
+    async function edit(id) {
+        const res = await fetch(SCRIPT_URL + "?action=getQuiz&id=" + id);
+        const data = await res.json();
+        document.getElementById('current-id').value = id;
+        document.getElementById('proj-name').value = data.name;
+        document.getElementById('q-count').value = data.questions.length;
+        initQuiz();
+        setTimeout(() => {
+            data.questions.forEach((q, i) => {
+                document.getElementById(`q-${i}`).value = q.q;
+                document.getElementById(`o-${i}`).value = q.o.join(',');
+                document.getElementById(`a-${i}`).value = q.a;
+                document.getElementById(`m-${i}`).value = q.m;
+                document.getElementById(`raw-link-${i}`).value = "มีข้อมูลลิงก์เดิมอยู่แล้ว";
+                document.getElementById(`v-${i}`).src = q.m;
+            });
+        }, 800);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+</script>
+</body>
+</html>
