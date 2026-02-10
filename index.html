@@ -1,462 +1,344 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Smart Exam - สำหรับนักเรียน v2.0</title>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --p: #764ba2; --s: #667eea; --glass: rgba(255,255,255,0.9); }
-        body { 
-            font-family: 'Sarabun', sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            margin: 0; 
-            min-height: 100vh; 
-            overflow-x: hidden; 
-        }
-        
-        .container { max-width: 600px; margin: 40px auto; padding: 20px; }
-        .glass-card { 
-            background: var(--glass); 
-            backdrop-filter: blur(15px); 
-            border-radius: 24px; 
-            padding: 30px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
-            animation: fadeInUp 0.6s ease; 
-        }
-        
-        @keyframes fadeInUp { 
-            from { opacity: 0; transform: translateY(30px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        .welcome-screen { text-align: center; }
-        input { 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 2px solid #eee; 
-            margin: 10px 0; 
-            font-size: 16px; 
-            box-sizing: border-box; 
-            outline: none; 
-            transition: 0.3s;
-            font-family: 'Sarabun';
-        }
-        input:focus { border-color: var(--p); }
-
-        .btn { 
-            background: linear-gradient(45deg, var(--p), var(--s)); 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 12px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            width: 100%; 
-            font-size: 18px; 
-            margin-top: 15px; 
-            transition: 0.3s;
-            font-family: 'Sarabun';
-        }
-        .btn:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .progress-container { 
-            width: 100%; 
-            background: #eee; 
-            height: 8px; 
-            border-radius: 4px; 
-            margin-bottom: 20px; 
-            overflow: hidden; 
-        }
-        .progress-bar { 
-            height: 100%; 
-            background: var(--p); 
-            width: 0%; 
-            transition: 0.5s; 
-        }
-
-        .ar-viewer { 
-            width: 100%; 
-            height: 350px; 
-            background: radial-gradient(circle, #444 0%, #000 100%); 
-            border-radius: 20px; 
-            margin-bottom: 20px; 
-        }
-        
-        .option-btn { 
-            background: white; 
-            border: 2px solid #eee; 
-            padding: 15px; 
-            border-radius: 15px; 
-            margin-bottom: 10px; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            text-align: left; 
-            font-size: 16px; 
-            position: relative;
-        }
-        .option-btn:hover { border-color: var(--p); background: #f8f0ff; }
-        .option-btn.selected { 
-            background: var(--p); 
-            color: white; 
-            border-color: var(--p); 
-        }
-
-        .score-circle { 
-            width: 120px; 
-            height: 120px; 
-            line-height: 120px; 
-            border-radius: 50%; 
-            background: var(--p); 
-            color: white; 
-            font-size: 40px; 
-            margin: 20px auto; 
-            font-weight: bold; 
-        }
-
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            margin: 20px 0; 
-        }
-        .stat-card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 12px; 
-            text-align: center; 
-        }
-        .stat-value { 
-            font-size: 24px; 
-            font-weight: bold; 
-            color: var(--p); 
-        }
-        .stat-label { 
-            font-size: 12px; 
-            color: #666; 
-        }
-
-        .ar-controls { 
-            text-align: center; 
-            margin: 10px 0; 
-            font-size: 14px; 
-            color: #666; 
-        }
-        .ar-interaction-badge {
-            display: inline-block;
-            background: #10b981;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AR Quiz — Student</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; background:#f6f7fb; color:#222; }
+    .container { max-width: 980px; margin: 24px auto; padding: 18px; background: #fff; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    .row { display:flex; gap:12px; align-items:center; }
+    .col { flex:1; }
+    #lobby, #quiz-screen, #result-screen { display:block; }
+    .hidden { display:none; }
+    #ar-wrap { width:100%; height:360px; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+    model-viewer { width:100%; height:100%; background:#000; }
+    .option-btn { padding:12px 14px; margin:8px 0; border-radius:6px; background:#f1f5fb; cursor:pointer; border:1px solid #e1e6f2; }
+    .option-btn.selected { background:#dfefff; border-color:#9fc3ff; }
+    #next-btn { margin-top:12px; padding:10px 14px; background:#2b7cff; color:#fff; border-radius:6px; cursor:pointer; display:inline-block; }
+    #pbar { height:10px; background:#e6eefc; border-radius:6px; overflow:hidden; margin-top:12px; }
+    #p-bar { height:100%; width:0%; background:linear-gradient(90deg,#4f9bff,#2b7cff); }
+    .stat { display:inline-block; margin-right:12px; }
+    #ai-feedback { white-space:pre-wrap; background:#fbfdff; padding:12px; border-radius:6px; border:1px solid #eef5ff; }
+    .badge { display:inline-block; padding:6px 8px; background:#eef6ff; border-radius:6px; margin-left:8px; }
+  </style>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
+  <div class="container">
+    <h2>AR Quiz — Student</h2>
 
-<div class="container">
-    <!-- Lobby Screen -->
-    <div id="lobby" class="glass-card welcome-screen">
-        <h1 style="color:var(--p)">✨ AR Intelligent Exam v2.0</h1>
-        <p>ยินดีต้อนรับนักเรียน เข้าสู่การทดสอบโลกเสมือนพร้อมระบบวิเคราะห์พฤติกรรม</p>
-        <input type="text" id="std-name" placeholder="ชื่อ-นามสกุลของคุณ">
-        <input type="text" id="quiz-id" placeholder="รหัสข้อสอบ (ที่ได้รับจากคุณครู)">
-        <button class="btn" onclick="startExam()">🚀 เริ่มการทดสอบ</button>
+    <!-- Lobby -->
+    <div id="lobby">
+      <div style="margin-bottom:12px;">
+        <label>ชื่อ-นามสกุล</label><br />
+        <input id="std-name" style="width:100%; padding:8px; margin-top:6px;" placeholder="เช่น สมชาย ใจดี" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>รหัสข้อสอบ</label><br />
+        <input id="quiz-id" style="width:100%; padding:8px; margin-top:6px;" placeholder="เช่น AR-A1B2C3" />
+      </div>
+      <div style="text-align:right;">
+        <button id="start-btn" style="padding:10px 14px; background:#2b7cff; color:#fff; border-radius:6px; border:none; cursor:pointer;">🚀 เริ่มการทดสอบ</button>
+      </div>
     </div>
 
     <!-- Quiz Screen -->
-    <div id="quiz-screen" class="glass-card" style="display:none;">
-        <div class="progress-container">
-            <div id="p-bar" class="progress-bar"></div>
+    <div id="quiz-screen" class="hidden">
+      <div class="row" style="align-items:flex-start;">
+        <div class="col" style="min-width:360px;">
+          <div id="ar-wrap">
+            <!-- model-viewer element -->
+            <model-viewer id="ar-view" src="" alt="AR Model" camera-controls touch-action="pan-y" exposure="1" ar ar-modes="webxr scene-viewer quick-look" style="width:100%; height:100%;"></model-viewer>
+          </div>
+          <div style="margin-top:8px;">
+            <span id="timer">⏱️ 0.0 วินาที</span>
+            <span id="ar-badge" class="badge">ปฏิสัมพันธ์: 0 ครั้ง</span>
+            <span id="q-number" style="float:right; font-weight:600;"></span>
+          </div>
         </div>
-        
-        <div style="display:flex; justify-content: space-between; font-size: 14px; color: #666; margin-bottom: 10px;">
-            <span id="q-number">ข้อที่ 1/3</span>
-            <span id="timer">⏱️ 0 วินาที</span>
+
+        <div class="col" style="flex:0.9;">
+          <div style="margin-bottom:8px;">
+            <div id="q-text" style="font-size:18px; font-weight:600;"></div>
+            <div id="pbar"><div id="p-bar"></div></div>
+          </div>
+
+          <div id="options-area" style="margin-top:12px;"></div>
+
+          <div style="margin-top:12px;">
+            <button id="next-btn" style="display:none;">ส่งคำตอบ / ข้อต่อไป</button>
+          </div>
         </div>
-        
-        <h2 id="q-text" style="color:var(--p); margin-top:0;">กำลังโหลดคำถาม...</h2>
-        
-        <model-viewer 
-            id="ar-view" 
-            class="ar-viewer" 
-            camera-controls 
-            ar 
-            shadow-intensity="1" 
-            auto-rotate
-            interaction-prompt="none">
-        </model-viewer>
-        
-        <div class="ar-controls">
-            🔄 หมุนดูโมเดลได้ | 🔍 ซูมได้ | <span id="ar-badge" class="ar-interaction-badge">โต้ตอบ: 0 ครั้ง</span>
-        </div>
-        
-        <div id="options-area"></div>
-        <button class="btn" id="next-btn" onclick="submitAnswer()" style="display:none;">ส่งคำตอบ / ข้อถัดไป →</button>
+      </div>
     </div>
 
     <!-- Result Screen -->
-    <div id="result-screen" class="glass-card" style="display:none; text-align: center;">
-        <h2 style="color:var(--p)">🎉 ส่งข้อสอบสำเร็จ!</h2>
-        <div class="score-circle" id="final-score">0</div>
-        <p style="font-size: 18px; font-weight: 600;">คะแนนของคุณ</p>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="stat-time">0</div>
-                <div class="stat-label">เวลาทั้งหมด (วินาที)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-ar">0</div>
-                <div class="stat-label">การโต้ตอบ AR</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-changes">0</div>
-                <div class="stat-label">การเปลี่ยนคำตอบ</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-type">-</div>
-                <div class="stat-label">ประเภทผู้เรียน</div>
-            </div>
-        </div>
-        
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: left;">
-            <h3 style="margin-top: 0; color: var(--p);">📊 AI วิเคราะห์พฤติกรรม</h3>
-            <p id="ai-feedback" style="line-height: 1.8; color: #333;">กำลังวิเคราะห์...</p>
-        </div>
-        
-        <button class="btn" onclick="location.reload()">🔄 ทำข้อสอบใหม่</button>
-    </div>
-</div>
+    <div id="result-screen" class="hidden">
+      <h3>ผลการทดสอบ</h3>
+      <div style="margin-bottom:8px;">
+        <strong>คะแนน:</strong> <span id="final-score"></span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <strong>รวมเวลา (วินาที):</strong> <span id="stat-time"></span>
+        &nbsp;&nbsp;
+        <strong>AR Interactions:</strong> <span id="stat-ar"></span>
+        &nbsp;&nbsp;
+        <strong>Answer Changes:</strong> <span id="stat-changes"></span>
+      </div>
 
-<script>
-    // ⚙️ ตั้งค่า URL ของ Google Apps Script
+      <div style="margin-top:12px;">
+        <strong>ประเภทผู้เรียน:</strong> <span id="stat-type"></span>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div id="ai-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------
+    // Configuration
+    // -------------------------
+    // เปลี่ยนเป็น URL ของ Web App Apps Script ของคุณ
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec';
-    
+
+    // -------------------------
+    // State
+    // -------------------------
     let quizData = null;
     let currentIdx = 0;
     let score = 0;
     let logs = [];
-    
-    // 📊 Analytics Variables - 6 Dimensions
-    let qStartTime, arStartTime, timerInterval;
-    let currentQuestionTime = 0;
-    let currentLog = {
-        questionIndex: 0,
+
+    let qStartTime = 0;
+    let timerInterval = null;
+    let currentLog = null;
+    let previousAnswer = null;
+    let globalSequence = 0;
+
+    // AR tracking globals
+    let arViewStartTime = null;
+    const viewer = document.getElementById('ar-view');
+
+    // -------------------------
+    // Utility
+    // -------------------------
+    function $(id) { return document.getElementById(id); }
+
+    // -------------------------
+    // AR listeners (bind once)
+    // -------------------------
+    function onCameraChange() {
+      if (!currentLog) return;
+      currentLog.arInteractions = (currentLog.arInteractions || 0) + 1;
+      $('ar-badge').innerText = `ปฏิสัมพันธ์: ${currentLog.arInteractions} ครั้ง`;
+    }
+    function onPointerEnter() { arViewStartTime = Date.now(); }
+    function onPointerLeave() {
+      if (arViewStartTime && currentLog) {
+        currentLog.arViewTime = (currentLog.arViewTime || 0) + (Date.now() - arViewStartTime) / 1000;
+        arViewStartTime = null;
+      }
+    }
+
+    // Bind safely (if viewer exists)
+    if (viewer) {
+      viewer.addEventListener('camera-change', onCameraChange);
+      viewer.addEventListener('pointerenter', onPointerEnter);
+      viewer.addEventListener('pointerleave', onPointerLeave);
+      // touch events for mobile
+      viewer.addEventListener('touchstart', () => { onPointerEnter(); onCameraChange(); }, {passive:true});
+      viewer.addEventListener('touchend', onPointerLeave, {passive:true});
+    }
+
+    // -------------------------
+    // Timer
+    // -------------------------
+    function updateTimer() {
+      if (!qStartTime) return;
+      const currentQuestionTime = ((Date.now() - qStartTime) / 1000).toFixed(1);
+      $('timer').innerText = `⏱️ ${currentQuestionTime} วินาที`;
+    }
+
+    // -------------------------
+    // Start exam
+    // -------------------------
+    $('start-btn').addEventListener('click', startExam);
+
+    async function startExam() {
+      const name = $('std-name').value.trim();
+      const id = $('quiz-id').value.trim();
+      if (!name || !id) return alert("กรุณากรอกชื่อและรหัสข้อสอบ");
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getQuiz&id=${encodeURIComponent(id)}&t=${Date.now()}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error || 'Quiz not found');
+        quizData = data;
+        // reset state
+        currentIdx = 0;
+        score = 0;
+        logs = [];
+        globalSequence = 0;
+
+        $('lobby').classList.add('hidden');
+        $('quiz-screen').classList.remove('hidden');
+        loadQuestion();
+      } catch (err) {
+        console.error(err);
+        alert("ไม่พบชุดข้อสอบ กรุณาตรวจสอบรหัส");
+      }
+    }
+
+    // -------------------------
+    // Load question
+    // -------------------------
+    function loadQuestion() {
+      const q = quizData.questions[currentIdx];
+      $('q-text').innerText = q.q || '';
+      $('q-number').innerText = `ข้อ ${currentIdx + 1}/${quizData.questions.length}`;
+
+      // set model src safely
+      try {
+        viewer.setAttribute('src', q.m || '');
+        if (typeof viewer.load === 'function') viewer.load();
+      } catch (e) {
+        console.warn('model-viewer set src failed', e);
+      }
+
+      // render options
+      const optArea = $('options-area');
+      optArea.innerHTML = '';
+      (q.o || []).forEach(opt => {
+        const btn = document.createElement('div');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.addEventListener('click', () => selectOption(btn, opt));
+        optArea.appendChild(btn);
+      });
+
+      // reset analytics for this question
+      globalSequence++;
+      qStartTime = Date.now();
+      previousAnswer = null;
+      currentLog = {
+        questionIndex: currentIdx,
         timeSpent: 0,
         arViewTime: 0,
         arInteractions: 0,
         answerChanges: 0,
         selectedAnswer: null,
         isCorrect: false,
-        sequenceOrder: 0
-    };
-    let previousAnswer = null;
-    let globalSequence = 0;
+        sequenceOrder: globalSequence
+      };
+      $('ar-badge').innerText = `ปฏิสัมพันธ์: 0 ครั้ง`;
+      $('next-btn').style.display = 'none';
 
-    // Timer Update
-    function updateTimer() {
-        currentQuestionTime = ((Date.now() - qStartTime) / 1000).toFixed(1);
-        document.getElementById('timer').innerText = `⏱️ ${currentQuestionTime} วินาที`;
+      // progress bar (show current question)
+      const progress = ((currentIdx + 1) / quizData.questions.length) * 100;
+      $('p-bar').style.width = `${progress}%`;
+
+      // timer
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 100);
+      updateTimer();
     }
 
-    async function startExam() {
-        const name = document.getElementById('std-name').value.trim();
-        const id = document.getElementById('quiz-id').value.trim();
-        
-        if(!name || !id) {
-            return alert("กรุณากรอกชื่อและรหัสข้อสอบให้ครบครับ");
-        }
-
-        try {
-            const res = await fetch(`${SCRIPT_URL}?action=getQuiz&id=${id}&t=${Date.now()}`);
-            quizData = await res.json();
-            
-            if(quizData.error) throw new Error("Quiz not found");
-            
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('quiz-screen').style.display = 'block';
-            loadQuestion();
-        } catch(e) { 
-            alert("ไม่พบรหัสข้อสอบนี้ โปรดตรวจสอบอีกครั้งครับ"); 
-        }
-    }
-
-    function loadQuestion() {
-        const q = quizData.questions[currentIdx];
-        
-        // Update UI
-        document.getElementById('q-text').innerText = q.q;
-        document.getElementById('q-number').innerText = `ข้อที่ ${currentIdx + 1}/${quizData.questions.length}`;
-        document.getElementById('ar-view').src = q.m;
-        
-        // Reset Options
-        const optArea = document.getElementById('options-area');
-        optArea.innerHTML = '';
-        q.o.forEach(opt => {
-            const btn = document.createElement('div');
-            btn.className = 'option-btn';
-            btn.innerText = opt.trim();
-            btn.onclick = () => selectOption(btn, opt.trim());
-            optArea.appendChild(btn);
-        });
-
-        // Reset Analytics for this question
-        globalSequence++;
-        qStartTime = Date.now();
-        currentQuestionTime = 0;
-        previousAnswer = null;
-        
-        currentLog = {
-            questionIndex: currentIdx,
-            timeSpent: 0,
-            arViewTime: 0,
-            arInteractions: 0,
-            answerChanges: 0,
-            selectedAnswer: null,
-            isCorrect: false,
-            sequenceOrder: globalSequence
-        };
-        
-        document.getElementById('next-btn').style.display = 'none';
-        document.getElementById('ar-badge').innerText = `โต้ตอบ: 0 ครั้ง`;
-        
-        // Progress bar
-        const progress = ((currentIdx) / quizData.questions.length) * 100;
-        document.getElementById('p-bar').style.width = `${progress}%`;
-        
-        // Start Timer
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(updateTimer, 100);
-        
-        // Track AR interactions
-        setupArTracking();
-    }
-
-    function setupArTracking() {
-        const viewer = document.getElementById('ar-view');
-        
-        // Track camera changes (rotation, zoom)
-        viewer.addEventListener('camera-change', () => {
-            currentLog.arInteractions++;
-            document.getElementById('ar-badge').innerText = `โต้ตอบ: ${currentLog.arInteractions} ครั้ง`;
-        });
-        
-        // Track AR viewing time
-        let arViewStartTime = null;
-        
-        viewer.addEventListener('mouseenter', () => {
-            arViewStartTime = Date.now();
-        });
-        
-        viewer.addEventListener('mouseleave', () => {
-            if (arViewStartTime) {
-                currentLog.arViewTime += (Date.now() - arViewStartTime) / 1000;
-                arViewStartTime = null;
-            }
-        });
-        
-        // For touch devices
-        viewer.addEventListener('touchstart', () => {
-            arViewStartTime = Date.now();
-            currentLog.arInteractions++;
-            document.getElementById('ar-badge').innerText = `โต้ตอบ: ${currentLog.arInteractions} ครั้ง`;
-        });
-        
-        viewer.addEventListener('touchend', () => {
-            if (arViewStartTime) {
-                currentLog.arViewTime += (Date.now() - arViewStartTime) / 1000;
-                arViewStartTime = null;
-            }
-        });
-    }
-
+    // -------------------------
+    // Option select
+    // -------------------------
     function selectOption(el, val) {
-        // Remove previous selection
-        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-        el.classList.add('selected');
-        
-        // Track answer changes (Dimension 3)
-        if (previousAnswer !== null && previousAnswer !== val) {
-            currentLog.answerChanges++;
-        }
-        previousAnswer = val;
-        currentLog.selectedAnswer = val;
-        
-        // Show next button
-        document.getElementById('next-btn').style.display = 'block';
+      document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+
+      if (previousAnswer !== null && previousAnswer !== val) {
+        currentLog.answerChanges = (currentLog.answerChanges || 0) + 1;
+      }
+      previousAnswer = val;
+      currentLog.selectedAnswer = val;
+      $('next-btn').style.display = 'inline-block';
     }
 
-    async function submitAnswer() {
-        if (!currentLog.selectedAnswer) {
-            return alert("กรุณาเลือกคำตอบก่อนครับ");
-        }
-        
-        // Stop timer
-        if (timerInterval) clearInterval(timerInterval);
-        
-        // Calculate time spent (Dimension 1)
-        currentLog.timeSpent = (Date.now() - qStartTime) / 1000;
-        
-        // Check correctness (Dimension 6)
-        const q = quizData.questions[currentIdx];
-        currentLog.isCorrect = (currentLog.selectedAnswer === q.a.trim());
-        if (currentLog.isCorrect) score++;
-        
-        // Save log
-        logs.push({...currentLog});
+    // -------------------------
+    // Submit answer / next
+    // -------------------------
+    $('next-btn').addEventListener('click', submitAnswer);
 
-        // Next question or finish
-        if (currentIdx < quizData.questions.length - 1) {
-            currentIdx++;
-            loadQuestion();
-        } else {
-            finishExam();
-        }
+    function submitAnswer() {
+      if (!currentLog || !currentLog.selectedAnswer) return alert("กรุณาเลือกคำตอบก่อน");
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+      currentLog.timeSpent = (Date.now() - qStartTime) / 1000;
+      const q = quizData.questions[currentIdx];
+      currentLog.isCorrect = (String(currentLog.selectedAnswer).trim() === String(q.a).trim());
+      if (currentLog.isCorrect) score++;
+
+      // push a deep copy to logs
+      logs.push(JSON.parse(JSON.stringify(currentLog)));
+
+      // move next or finish
+      if (currentIdx < quizData.questions.length - 1) {
+        currentIdx++;
+        loadQuestion();
+      } else {
+        finishExam();
+      }
     }
 
+    // -------------------------
+    // Finish and send analytics
+    // -------------------------
     async function finishExam() {
-        document.getElementById('quiz-screen').style.display = 'none';
-        document.getElementById('result-screen').style.display = 'block';
-        
-        // Display basic stats
-        const totalTime = logs.reduce((s, l) => s + l.timeSpent, 0);
-        const totalArInteractions = logs.reduce((s, l) => s + l.arInteractions, 0);
-        const totalChanges = logs.reduce((s, l) => s + l.answerChanges, 0);
-        
-        document.getElementById('final-score').innerText = `${score}/${quizData.questions.length}`;
-        document.getElementById('stat-time').innerText = totalTime.toFixed(1);
-        document.getElementById('stat-ar').innerText = totalArInteractions;
-        document.getElementById('stat-changes').innerText = totalChanges;
+      $('quiz-screen').classList.add('hidden');
+      $('result-screen').classList.remove('hidden');
 
-        // Submit to backend
-        const payload = {
-            type: "SUBMIT_ANALYTICS",
-            studentName: document.getElementById('std-name').value,
-            quizId: document.getElementById('quiz-id').value,
-            score: `${score}/${quizData.questions.length}`,
-            logs: logs
-        };
+      const totalTime = logs.reduce((s, l) => s + (l.timeSpent || 0), 0);
+      const totalArInteractions = logs.reduce((s, l) => s + (l.arInteractions || 0), 0);
+      const totalChanges = logs.reduce((s, l) => s + (l.answerChanges || 0), 0);
 
-        try {
-            const res = await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify(payload) 
-            });
-            const result = await res.json();
-            
-            // Display AI analysis
-            document.getElementById('ai-feedback').innerHTML = result.analysis.summary;
-            document.getElementById('stat-type').innerText = result.analysis.learnerType;
-            
-        } catch(e) {
-            document.getElementById('ai-feedback').innerText = "ไม่สามารถวิเคราะห์ข้อมูลได้ในขณะนี้";
+      $('final-score').innerText = `${score}/${quizData.questions.length}`;
+      $('stat-time').innerText = totalTime.toFixed(1);
+      $('stat-ar').innerText = totalArInteractions;
+      $('stat-changes').innerText = totalChanges;
+
+      const payload = {
+        type: "SUBMIT_ANALYTICS",
+        studentName: $('std-name').value.trim(),
+        quizId: $('quiz-id').value.trim(),
+        score: `${score}/${quizData.questions.length}`,
+        logs: logs
+      };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result && result.analysis) {
+          $('ai-feedback').innerText = result.analysis.summary || '';
+          $('stat-type').innerText = result.analysis.learnerType || '';
+        } else {
+          $('ai-feedback').innerText = 'ได้รับผลลัพธ์จากเซิร์ฟเวอร์ แต่ไม่มีการวิเคราะห์';
         }
+      } catch (err) {
+        console.error(err);
+        $('ai-feedback').innerText = 'ไม่สามารถส่งข้อมูลไปยังเซิร์ฟเวอร์ได้';
+      }
     }
-</script>
+
+    // -------------------------
+    // Safety: beforeunload warn if quiz in progress
+    // -------------------------
+    window.addEventListener('beforeunload', function (e) {
+      if (logs.length > 0 && currentIdx < (quizData ? quizData.questions.length : 0)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  </script>
 </body>
 </html>
