@@ -13,14 +13,15 @@
     .hidden { display:none; }
     #ar-wrap { width:100%; height:360px; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
     model-viewer { width:100%; height:100%; background:#000; }
-    .option-btn { padding:12px 14px; margin:8px 0; border-radius:6px; background:#f1f5fb; cursor:pointer; border:1px solid #e1e6f2; }
+    .option-btn { padding:12px 14px; margin:8px 0; border-radius:6px; background:#f1f5fb; cursor:pointer; border:1px solid #e1e6f2; user-select:none; }
     .option-btn.selected { background:#dfefff; border-color:#9fc3ff; }
-    #next-btn { margin-top:12px; padding:10px 14px; background:#2b7cff; color:#fff; border-radius:6px; cursor:pointer; display:inline-block; }
+    #next-btn { margin-top:12px; padding:10px 14px; background:#2b7cff; color:#fff; border-radius:6px; cursor:pointer; display:inline-block; border:none; }
     #pbar { height:10px; background:#e6eefc; border-radius:6px; overflow:hidden; margin-top:12px; }
-    #p-bar { height:100%; width:0%; background:linear-gradient(90deg,#4f9bff,#2b7cff); }
+    #p-bar { height:100%; width:0%; background:linear-gradient(90deg,#4f9bff,#2b7cff); transition:width .3s ease; }
     .stat { display:inline-block; margin-right:12px; }
     #ai-feedback { white-space:pre-wrap; background:#fbfdff; padding:12px; border-radius:6px; border:1px solid #eef5ff; }
     .badge { display:inline-block; padding:6px 8px; background:#eef6ff; border-radius:6px; margin-left:8px; }
+    input, button { font-size:14px; }
   </style>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
@@ -48,7 +49,6 @@
       <div class="row" style="align-items:flex-start;">
         <div class="col" style="min-width:360px;">
           <div id="ar-wrap">
-            <!-- model-viewer element -->
             <model-viewer id="ar-view" src="" alt="AR Model" camera-controls touch-action="pan-y" exposure="1" ar ar-modes="webxr scene-viewer quick-look" style="width:100%; height:100%;"></model-viewer>
           </div>
           <div style="margin-top:8px;">
@@ -101,8 +101,7 @@
     // -------------------------
     // Configuration
     // -------------------------
-    // เปลี่ยนเป็น URL ของ Web App Apps Script ของคุณ
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec'; // <-- เปลี่ยนเป็น Web App URL ของคุณ
 
     // -------------------------
     // State
@@ -143,12 +142,10 @@
       }
     }
 
-    // Bind safely (if viewer exists)
     if (viewer) {
       viewer.addEventListener('camera-change', onCameraChange);
       viewer.addEventListener('pointerenter', onPointerEnter);
       viewer.addEventListener('pointerleave', onPointerLeave);
-      // touch events for mobile
       viewer.addEventListener('touchstart', () => { onPointerEnter(); onCameraChange(); }, {passive:true});
       viewer.addEventListener('touchend', onPointerLeave, {passive:true});
     }
@@ -177,7 +174,6 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error || 'Quiz not found');
         quizData = data;
-        // reset state
         currentIdx = 0;
         score = 0;
         logs = [];
@@ -200,7 +196,6 @@
       $('q-text').innerText = q.q || '';
       $('q-number').innerText = `ข้อ ${currentIdx + 1}/${quizData.questions.length}`;
 
-      // set model src safely
       try {
         viewer.setAttribute('src', q.m || '');
         if (typeof viewer.load === 'function') viewer.load();
@@ -208,7 +203,6 @@
         console.warn('model-viewer set src failed', e);
       }
 
-      // render options
       const optArea = $('options-area');
       optArea.innerHTML = '';
       (q.o || []).forEach(opt => {
@@ -219,7 +213,6 @@
         optArea.appendChild(btn);
       });
 
-      // reset analytics for this question
       globalSequence++;
       qStartTime = Date.now();
       previousAnswer = null;
@@ -236,11 +229,9 @@
       $('ar-badge').innerText = `ปฏิสัมพันธ์: 0 ครั้ง`;
       $('next-btn').style.display = 'none';
 
-      // progress bar (show current question)
       const progress = ((currentIdx + 1) / quizData.questions.length) * 100;
       $('p-bar').style.width = `${progress}%`;
 
-      // timer
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 100);
       updateTimer();
@@ -275,10 +266,8 @@
       currentLog.isCorrect = (String(currentLog.selectedAnswer).trim() === String(q.a).trim());
       if (currentLog.isCorrect) score++;
 
-      // push a deep copy to logs
       logs.push(JSON.parse(JSON.stringify(currentLog)));
 
-      // move next or finish
       if (currentIdx < quizData.questions.length - 1) {
         currentIdx++;
         loadQuestion();
@@ -331,10 +320,10 @@
     }
 
     // -------------------------
-    // Safety: beforeunload warn if quiz in progress
+    // Warn on leave
     // -------------------------
     window.addEventListener('beforeunload', function (e) {
-      if (logs.length > 0 && currentIdx < (quizData ? quizData.questions.length : 0)) {
+      if (logs.length > 0 && quizData && currentIdx < quizData.questions.length) {
         e.preventDefault();
         e.returnValue = '';
       }
