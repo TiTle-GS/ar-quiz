@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Smart Admin v6.0 - Google Drive Mode</title>
+    <title>AR Smart Admin v7.0 - Drive Mode with Loading</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -11,14 +11,18 @@
         body { font-family: 'Sarabun', sans-serif; background: #f0f7ff; margin: 0; padding: 20px; color: #1e293b; }
         .container { max-width: 1200px; margin: 0 auto; }
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #fff; }
-        .btn { padding: 12px 24px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: 'Sarabun'; }
+        .btn { padding: 12px 24px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: 'Sarabun'; font-size: 14px; justify-content: center; }
         .btn-primary { background: linear-gradient(135deg, var(--p), var(--s)); color: white; }
-        .btn-update { background: var(--g); color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; padding: 18px; justify-content: center; }
+        .btn-check { background: #4f46e5; color: white; width: 100%; margin-top: 10px; }
+        .btn-update { background: var(--g); color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; padding: 18px; }
         .q-block { display: grid; grid-template-columns: 1fr 350px; gap: 25px; padding: 25px; background: white; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .preview-pane { background: #000; border-radius: 18px; height: 320px; overflow: hidden; border: 4px solid #f1f5f9; position: relative; }
+        .preview-pane { background: #000; border-radius: 18px; height: 320px; overflow: hidden; border: 4px solid #f1f5f9; position: relative; display: flex; align-items: center; justify-content: center; }
         .drive-box { background: #f0fdf4; padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px dashed var(--g); }
-        input, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-top: 5px; font-family: 'Sarabun'; }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-top: 5px; font-family: 'Sarabun'; box-sizing: border-box; }
+        
+        /* 🌀 Loading Spinner */
+        .loader-ui { display: none; flex-direction: column; align-items: center; color: white; gap: 15px; z-index: 10; position: absolute; }
+        .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--p); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -27,11 +31,10 @@
 <div class="container">
     <div class="glass-card">
         <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Creator (Google Drive Version)</h2>
-        <p style="font-size: 0.9rem; color: #64748b;">วิธีใช้: อัปโหลดไฟล์ .glb ลง Google Drive > กดแชร์แบบ Anyone with link > วางลิงก์ในช่องโมเดล</p>
         <div style="display: flex; gap: 12px;">
             <input type="text" id="proj-name" placeholder="ชื่อวิชา / ชุดข้อสอบ">
             <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:120px;">
-            <button class="btn btn-primary" onclick="initQuiz()">🚀 สร้างข้อสอบ</button>
+            <button class="btn btn-primary" onclick="initQuiz()">🚀 เริ่มสร้างข้อสอบ</button>
         </div>
         <input type="hidden" id="current-id">
     </div>
@@ -48,7 +51,6 @@
 </div>
 
 <script>
-    // ⚙️ ตั้งค่าเชื่อมต่อ Google Sheets (ใช้ลิงก์เดิมที่คุณครู Deploy ล่าสุด)
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec';
 
     window.onload = loadList;
@@ -68,15 +70,17 @@
                         <input type="text" id="a-${i}" placeholder="คำตอบที่ถูกต้อง">
                         
                         <div class="drive-box">
-                            <label style="font-weight:600; color:var(--g); font-size:14px;">🔗 ลิงก์โมเดลจาก Google Drive</label>
-                            <input type="text" id="m-${i}" 
-                                   placeholder="วางลิงก์ที่ได้จากปุ่ม Share ใน Google Drive" 
-                                   oninput="handleDriveLink(${i}, this.value)"
-                                   style="border-color: var(--g);">
-                            <small style="color:#64748b; font-size:11px;">* ระบบจะแปลงลิงก์เป็นแบบ Direct ให้อัตโนมัติ</small>
+                            <label style="font-weight:600; color:var(--g); font-size:14px;">🔗 วางลิงก์ Google Drive (ต้องแชร์เป็น Anyone)</label>
+                            <input type="text" id="raw-link-${i}" placeholder="https://drive.google.com/file/d/...">
+                            <input type="hidden" id="m-${i}">
+                            <button class="btn btn-check" id="btn-check-${i}" onclick="processModel(${i})">🔍 ตรวจสอบลิงก์โมเดล</button>
                         </div>
                     </div>
-                    <div class="preview-pane">
+                    <div class="preview-pane" id="pane-${i}">
+                        <div class="loader-ui" id="loader-${i}">
+                            <div class="spinner"></div>
+                            <span>กำลังโหลดโมเดล 3D...</span>
+                        </div>
                         <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
                     </div>
                 </div>`;
@@ -84,26 +88,51 @@
         document.getElementById('action-bar').style.display = 'block';
     }
 
-    // ✨ ตัวแปลงลิงก์ Google Drive อัตโนมัติ
-    function handleDriveLink(i, url) {
-        if (!url || !url.includes("drive.google.com")) {
-            if(url.includes(".glb")) preview(i); // ถ้าเป็นลิงก์ .glb ตรงๆ ให้แสดงเลย
-            return;
+    function processModel(i) {
+        const rawUrl = document.getElementById(`raw-link-${i}`).value;
+        const btn = document.getElementById(`btn-check-${i}`);
+        const loader = document.getElementById(`loader-${i}`);
+        const viewer = document.getElementById(`v-${i}`);
+
+        if (!rawUrl.includes("drive.google.com")) {
+            return alert("โปรดวางลิงก์จาก Google Drive ให้ถูกต้องครับ");
         }
+
+        // แสดง Loading
+        loader.style.display = 'flex';
+        btn.disabled = true;
+        btn.innerHTML = "⌛ กำลังประมวลผล...";
+
         try {
-            const parts = url.split('/d/');
+            const parts = rawUrl.split('/d/');
             if (parts.length > 1) {
                 const fileId = parts[1].split('/')[0].split('?')[0].split('&')[0];
                 const directLink = `https://docs.google.com/uc?export=download&id=${fileId}`;
+                
                 document.getElementById(`m-${i}`).value = directLink;
-                preview(i);
-            }
-        } catch (e) { console.error("Link conversion failed"); }
-    }
+                viewer.src = directLink;
 
-    function preview(i) {
-        const url = document.getElementById(`m-${i}`).value;
-        if(url) document.getElementById(`v-${i}`).src = url;
+                // เมื่อโมเดลโหลดเสร็จ หรือ เกิดข้อผิดพลาด
+                viewer.addEventListener('load', () => {
+                    loader.style.display = 'none';
+                    btn.disabled = false;
+                    btn.innerHTML = "✅ ตรวจสอบสำเร็จ (โมเดลขึ้นแล้ว)";
+                    btn.style.background = "var(--g)";
+                });
+
+                viewer.addEventListener('error', () => {
+                    loader.style.display = 'none';
+                    btn.disabled = false;
+                    btn.innerHTML = "❌ โหลดไม่สำเร็จ (เช็คการแชร์ไฟล์)";
+                    btn.style.background = "#ef4444";
+                    alert("โมเดลไม่ขึ้น! โปรดตรวจสอบว่าคุณครูแชร์ไฟล์แบบ 'Anyone with the link' หรือยัง?");
+                });
+            }
+        } catch (e) {
+            alert("ลิงก์ไม่ถูกต้อง");
+            loader.style.display = 'none';
+            btn.disabled = false;
+        }
     }
 
     async function saveToCloud() {
@@ -111,63 +140,14 @@
         const count = document.getElementById('q-count').value;
         const questions = [];
         for(let i=0; i<count; i++) {
+            const mVal = document.getElementById(`m-${i}`).value;
+            if(!mVal) return alert(`คุณครูยังไม่ได้ตรวจสอบโมเดลในข้อที่ ${i+1} ครับ`);
             questions.push({
                 q: document.getElementById(`q-${i}`).value,
                 o: document.getElementById(`o-${i}`).value.split(','),
                 a: document.getElementById(`a-${i}`).value,
-                m: document.getElementById(`m-${i}`).value
+                m: mVal
             });
         }
-        
-        btn.disabled = true; btn.innerHTML = `<span class="loader"></span> กำลังบันทึก...`;
-        
+        btn.disabled = true; btn.innerHTML = "💾 กำลังบันทึกลงฐานข้อมูล...";
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    type: "SAVE_QUIZ",
-                    id: document.getElementById('current-id').value,
-                    name: document.getElementById('proj-name').value,
-                    questions: questions
-                })
-            });
-            alert("บันทึกชุดข้อสอบสำเร็จ!");
-            loadList();
-        } catch(e) { alert("บันทึกไม่สำเร็จ โปรดเช็คการ Deploy Web App"); }
-        btn.disabled = false; btn.innerHTML = "💾 บันทึกชุดข้อสอบลง Google Sheets";
-    }
-
-    async function loadList() {
-        try {
-            const res = await fetch(SCRIPT_URL + "?action=list&t=" + Date.now());
-            const list = await res.json();
-            document.getElementById('project-list').innerHTML = list.map(p => `
-                <div class="glass-card" style="margin:0; border-left:6px solid var(--p); padding:15px;">
-                    <h4 style="margin:0;">${p.name}</h4>
-                    <p style="font-size:11px; color:gray; margin:5px 0;">ID: ${p.id}</p>
-                    <button class="btn" style="background:#f1f5f9; width:100%;" onclick="edit('${p.id}')">📝 แก้ไข</button>
-                </div>`).join('');
-        } catch(e) { document.getElementById('project-list').innerHTML = "ไม่สามารถโหลดคลังข้อสอบได้"; }
-    }
-
-    async function edit(id) {
-        const res = await fetch(SCRIPT_URL + "?action=getQuiz&id=" + id);
-        const data = await res.json();
-        document.getElementById('current-id').value = id;
-        document.getElementById('proj-name').value = data.name;
-        document.getElementById('q-count').value = data.questions.length;
-        initQuiz();
-        setTimeout(() => {
-            data.questions.forEach((q, i) => {
-                document.getElementById(`q-${i}`).value = q.q;
-                document.getElementById(`o-${i}`).value = q.o.join(',');
-                document.getElementById(`a-${i}`).value = q.a;
-                document.getElementById(`m-${i}`).value = q.m;
-                preview(i);
-            });
-        }, 500);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-</script>
-</body>
-</html>
