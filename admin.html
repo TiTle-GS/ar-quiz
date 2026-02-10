@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Smart Admin v5.0 - GitHub Direct Storage</title>
+    <title>AR Smart Admin v5.5 - GitHub Storage Mode</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --p: #6366f1; --s: #8b5cf6; --g: #10b981; --bg: #f8fafc; }
-        body { font-family: 'Sarabun', sans-serif; background: #eff6ff; margin: 0; padding: 20px; color: #1e293b; }
+        body { font-family: 'Sarabun', sans-serif; background: #f0f7ff; margin: 0; padding: 20px; color: #1e293b; }
         .container { max-width: 1200px; margin: 0 auto; }
         .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 24px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #fff; }
-        .btn { padding: 12px 24px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: 'Sarabun'; }
+        .btn { padding: 12px 24px; border-radius: 14px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-family: 'Sarabun'; font-size: 14px; }
         .btn-ai { background: linear-gradient(135deg, var(--p), var(--s)); color: white; }
-        .btn-update { background: var(--g); color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; padding: 16px; }
+        .btn-upload { background: #475569; color: white; width: 100%; margin-top: 10px; justify-content: center; }
+        .btn-update { background: var(--g); color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; padding: 18px; }
         .q-block { display: grid; grid-template-columns: 1fr 350px; gap: 25px; padding: 25px; background: white; border-radius: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .preview-pane { background: #000; border-radius: 18px; height: 320px; overflow: hidden; border: 4px solid #f1f5f9; }
+        .preview-pane { background: #000; border-radius: 18px; height: 320px; overflow: hidden; border: 4px solid #f1f5f9; position: relative; }
         .model-tool-box { background: #f8fafc; padding: 20px; border-radius: 18px; margin-top: 15px; border: 1px dashed var(--p); }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--p); border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -26,11 +27,11 @@
 
 <div class="container">
     <div class="glass-card">
-        <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Intelligent Creator (GitHub Storage)</h2>
+        <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Creator (GitHub Cloud)</h2>
         <div style="display: flex; gap: 12px;">
-            <input type="text" id="proj-name" placeholder="ชื่อชุดข้อสอบ" style="flex:1; padding:15px; border-radius:15px; border:1px solid #ddd; outline:none;">
+            <input type="text" id="proj-name" placeholder="ชื่อวิชา / ชุดข้อสอบ" style="flex:1; padding:15px; border-radius:15px; border:1px solid #ddd; outline:none;">
             <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:120px; padding:15px; border-radius:15px; border:1px solid #ddd; outline:none;">
-            <button class="btn btn-ai" onclick="initQuiz()">🚀 เริ่มสร้าง</button>
+            <button class="btn btn-ai" onclick="initQuiz()">🚀 สร้างข้อสอบ</button>
         </div>
         <input type="hidden" id="current-id">
     </div>
@@ -47,11 +48,11 @@
 </div>
 
 <script>
-    // 🔑 การตั้งค่า GitHub และ API (ตรวจสอบความถูกต้อง)
+    // ⚙️ การตั้งค่าเชื่อมต่อ
     const GH_USER = "TiTle-GS"; 
     const GH_REPO = "ar-quiz";
-    const GH_TOKEN = "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"; 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec';
+    const GH_TOKEN = "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"; 
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxc4enXMM2nafJmpuXJBgsbgnNaJB1-vih0MbRYjQq3gmX-sc3RzsnxFXrxpNftBgkLTA/exec';
     const API_KEY = 'AIzaSyD-x5oYoiNhClunMwiVE2f5Tg4IvN3V1Lg';
 
     window.onload = loadList;
@@ -59,26 +60,26 @@
     function initQuiz() {
         const n = document.getElementById('q-count').value;
         const area = document.getElementById('quiz-area');
-        if(!n || n <= 0) return alert("ระบุจำนวนข้อ");
+        if(!n || n <= 0) return alert("โปรดระบุจำนวนข้อ");
         area.innerHTML = '';
         for(let i=0; i<n; i++) {
             area.innerHTML += `
                 <div class="glass-card q-block">
                     <div>
                         <h3 style="color:var(--p)">ข้อที่ ${i+1}</h3>
-                        <textarea id="q-${i}" placeholder="คำถาม" style="width:100%; height:70px; border-radius:12px; padding:10px; border:1px solid #ddd;"></textarea>
-                        <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง)" style="width:100%; margin:8px 0; padding:10px; border-radius:12px; border:1px solid #ddd;">
-                        <input type="text" id="a-${i}" placeholder="เฉลย" style="width:100%; padding:10px; border-radius:12px; border:1px solid #ddd;">
+                        <textarea id="q-${i}" placeholder="โจทย์คำถาม..." style="width:100%; height:70px; border-radius:12px; padding:10px; border:1px solid #ddd;"></textarea>
+                        <input type="text" id="o-${i}" placeholder="ตัวเลือก ก,ข,ค,ง (แยกด้วยคอมม่า)" style="width:100%; margin:8px 0; padding:10px; border-radius:12px; border:1px solid #ddd;">
+                        <input type="text" id="a-${i}" placeholder="คำตอบที่ถูกต้อง" style="width:100%; padding:10px; border-radius:12px; border:1px solid #ddd;">
                         
                         <div class="model-tool-box">
-                            <label style="font-weight:600; color:var(--p);">📦 จัดการโมเดล AR 3D</label>
-                            <div style="display:flex; gap:8px; margin:10px 0;">
-                                <input type="text" id="p-${i}" placeholder="ค้นหาด้วย AI (English)..." style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;">
+                            <label style="font-weight:600; color:var(--p); font-size:14px;">📦 จัดการโมเดล AR</label>
+                            <div style="display:flex; gap:8px; margin-top:10px;">
+                                <input type="text" id="p-${i}" placeholder="ค้นหาด้วย AI (ภาษาอังกฤษ)..." style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;">
                                 <button class="btn btn-ai" onclick="generateModel(${i}, this)">✨ AI</button>
                             </div>
-                            <button class="btn" id="upbtn-${i}" style="background:#64748b; color:white; width:100%;" onclick="document.getElementById('file-${i}').click()">📤 อัปโหลดไฟล์ .glb ไป GitHub</button>
+                            <button class="btn btn-upload" id="upbtn-${i}" onclick="document.getElementById('file-${i}').click()">📤 อัปโหลดไฟล์ .glb (ได้ถึง 10MB)</button>
                             <input type="file" id="file-${i}" accept=".glb" style="display:none;" onchange="handleGithubUpload(${i}, this)">
-                            <input type="text" id="m-${i}" placeholder="URL ของโมเดลจะขึ้นตรงนี้" onchange="preview(${i})" style="width:100%; margin-top:10px; padding:8px; border-radius:10px; border:1px solid #eee; font-size:11px; background:#f1f5f9;">
+                            <input type="text" id="m-${i}" placeholder="URL ไฟล์จะปรากฏที่นี่" onchange="preview(${i})" style="width:100%; margin-top:10px; padding:8px; border-radius:10px; border:1px solid #eee; font-size:11px; background:#f1f5f9;">
                         </div>
                     </div>
                     <div class="preview-pane"><model-viewer id="v-${i}" camera-controls ar crossorigin="anonymous" style="width:100%; height:100%;"></model-viewer></div>
@@ -87,7 +88,7 @@
         document.getElementById('action-bar').style.display = 'block';
     }
 
-    // 🚀 ระบบอัปโหลดไฟล์ไป GitHub โดยตรง
+    // 🚀 ฟังก์ชันอัปโหลดไป GitHub โดยตรง (แก้ปัญหาไฟล์ใหญ่ 3.2MB)
     async function handleGithubUpload(i, input) {
         const file = input.files[0];
         if (!file) return;
@@ -100,6 +101,7 @@
         const reader = new FileReader();
         reader.onload = async function(e) {
             const content = e.target.result.split(',')[1];
+            // สร้างชื่อไฟล์ไม่ซ้ำกัน
             const fileName = `models/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
             const apiUrl = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${fileName}`;
 
@@ -107,19 +109,24 @@
                 const res = await fetch(apiUrl, {
                     method: "PUT",
                     headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: `Upload model: ${file.name}`, content: content })
+                    body: JSON.stringify({ 
+                        message: `Upload AR: ${file.name}`, 
+                        content: content,
+                        branch: "main" // กำหนดเป็นสาขา main เสมอ
+                    })
                 });
 
                 if (res.ok) {
+                    // สร้าง Raw Link จากสาขา main
                     const rawUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${fileName}`;
                     document.getElementById(`m-${i}`).value = rawUrl;
                     preview(i);
                     alert("อัปโหลดสำเร็จ! ไฟล์ถูกเก็บใน GitHub เรียบร้อย");
                 } else { throw new Error(); }
-            } catch (err) { alert("อัปโหลดไม่สำเร็จ โปรดเช็คสิทธิ์ Token ของคุณครูครับ"); }
-            
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            } catch (err) { 
+                alert("อัปโหลดไม่สำเร็จ: โปรดเช็คสิทธิ์ Token (repo) หรือชื่อ Repository"); 
+            }
+            btn.disabled = false; btn.innerHTML = originalText;
         };
         reader.readAsDataURL(file);
     }
@@ -137,7 +144,7 @@
             const url = data.candidates[0].content.parts[0].text.trim().replace(/`/g, "");
             document.getElementById(`m-${i}`).value = url;
             preview(i);
-        } catch(e) { alert("AI หาลิงก์ตรงไม่เจอ แนะนำให้อัปโหลดไฟล์เองครับ"); }
+        } catch(e) { alert("AI หาไม่เจอ แนะนำให้อัปโหลดไฟล์เองครับ"); }
         btn.disabled = false; btn.innerHTML = "✨ AI";
     }
 
@@ -150,10 +157,10 @@
         for(let i=0; i<count; i++) {
             qs.push({ q: document.getElementById(`q-${i}`).value, o: document.getElementById(`o-${i}`).value.split(','), a: document.getElementById(`a-${i}`).value, m: document.getElementById(`m-${i}`).value });
         }
-        btn.disabled = true; btn.innerHTML = "💾 กำลังบันทึกลง Google Sheets...";
+        btn.disabled = true; btn.innerHTML = "💾 กำลังบันทึก...";
         try {
             await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ type: "SAVE_QUIZ", id: document.getElementById('current-id').value, name: document.getElementById('proj-name').value, questions: qs })});
-            alert("บันทึกสำเร็จ! ข้อมูลใน Google Sheets จะเก็บเพียงลิงก์สั้นๆ ทำให้ไม่มีปัญหาไฟล์ใหญ่");
+            alert("บันทึกสำเร็จ! ข้อมูลถูกเก็บใน Google Sheets เรียบร้อย");
             loadList();
         } catch(e) { alert("บันทึกไม่สำเร็จ"); }
         btn.disabled = false; btn.innerHTML = "💾 บันทึกชุดข้อสอบลง Google Sheets";
