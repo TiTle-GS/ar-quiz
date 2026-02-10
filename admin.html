@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Smart Admin v7.0 - Drive Mode with Loading</title>
+    <title>AR Smart Admin v8.0 - Google Drive High-Speed</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -20,7 +20,6 @@
         .drive-box { background: #f0fdf4; padding: 15px; border-radius: 15px; margin-top: 15px; border: 1px dashed var(--g); }
         input, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-top: 5px; font-family: 'Sarabun'; box-sizing: border-box; }
         
-        /* 🌀 Loading Spinner */
         .loader-ui { display: none; flex-direction: column; align-items: center; color: white; gap: 15px; z-index: 10; position: absolute; }
         .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--p); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -30,7 +29,7 @@
 
 <div class="container">
     <div class="glass-card">
-        <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Creator (Google Drive Version)</h2>
+        <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Creator (High-Speed Drive)</h2>
         <div style="display: flex; gap: 12px;">
             <input type="text" id="proj-name" placeholder="ชื่อวิชา / ชุดข้อสอบ">
             <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:120px;">
@@ -51,6 +50,7 @@
 </div>
 
 <script>
+    // ⚙️ ตรวจสอบ SCRIPT_URL ให้ตรงกับ Google Apps Script ของคุณครู
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec';
 
     window.onload = loadList;
@@ -70,8 +70,8 @@
                         <input type="text" id="a-${i}" placeholder="คำตอบที่ถูกต้อง">
                         
                         <div class="drive-box">
-                            <label style="font-weight:600; color:var(--g); font-size:14px;">🔗 วางลิงก์ Google Drive (ต้องแชร์เป็น Anyone)</label>
-                            <input type="text" id="raw-link-${i}" placeholder="https://drive.google.com/file/d/...">
+                            <label style="font-weight:600; color:var(--g); font-size:14px;">🔗 วางลิงก์ Google Drive</label>
+                            <input type="text" id="raw-link-${i}" placeholder="วางลิงก์จากปุ่ม Share ที่นี่">
                             <input type="hidden" id="m-${i}">
                             <button class="btn btn-check" id="btn-check-${i}" onclick="processModel(${i})">🔍 ตรวจสอบลิงก์โมเดล</button>
                         </div>
@@ -79,15 +79,16 @@
                     <div class="preview-pane" id="pane-${i}">
                         <div class="loader-ui" id="loader-${i}">
                             <div class="spinner"></div>
-                            <span>กำลังโหลดโมเดล 3D...</span>
+                            <span>กำลังโหลดจาก Drive...</span>
                         </div>
-                        <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
+                        <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" crossorigin="anonymous" style="width:100%; height:100%;"></model-viewer>
                     </div>
                 </div>`;
         }
         document.getElementById('action-bar').style.display = 'block';
     }
 
+    // 🚀 ฟังก์ชันประมวลผลลิงก์แบบ High-Speed
     function processModel(i) {
         const rawUrl = document.getElementById(`raw-link-${i}`).value;
         const btn = document.getElementById(`btn-check-${i}`);
@@ -95,43 +96,43 @@
         const viewer = document.getElementById(`v-${i}`);
 
         if (!rawUrl.includes("drive.google.com")) {
-            return alert("โปรดวางลิงก์จาก Google Drive ให้ถูกต้องครับ");
+            return alert("โปรดวางลิงก์จาก Google Drive เท่านั้นครับ");
         }
 
-        // แสดง Loading
         loader.style.display = 'flex';
         btn.disabled = true;
-        btn.innerHTML = "⌛ กำลังประมวลผล...";
+        btn.innerHTML = "⌛ กำลังดึงโมเดล...";
 
         try {
             const parts = rawUrl.split('/d/');
             if (parts.length > 1) {
                 const fileId = parts[1].split('/')[0].split('?')[0].split('&')[0];
-                const directLink = `https://docs.google.com/uc?export=download&id=${fileId}`;
+                // ✨ เปลี่ยนเป็นลิงก์ด่วน (High-Speed Link)
+                const directLink = `https://drive.google.com/uc?id=${fileId}`;
                 
                 document.getElementById(`m-${i}`).value = directLink;
                 viewer.src = directLink;
 
-                // เมื่อโมเดลโหลดเสร็จ หรือ เกิดข้อผิดพลาด
+                // ตรวจสอบความพร้อมของโมเดล
                 viewer.addEventListener('load', () => {
                     loader.style.display = 'none';
                     btn.disabled = false;
-                    btn.innerHTML = "✅ ตรวจสอบสำเร็จ (โมเดลขึ้นแล้ว)";
+                    btn.innerHTML = "✅ พร้อมใช้งานแล้ว";
                     btn.style.background = "var(--g)";
                 });
 
                 viewer.addEventListener('error', () => {
                     loader.style.display = 'none';
                     btn.disabled = false;
-                    btn.innerHTML = "❌ โหลดไม่สำเร็จ (เช็คการแชร์ไฟล์)";
+                    btn.innerHTML = "❌ โหลดไม่สำเร็จ";
                     btn.style.background = "#ef4444";
-                    alert("โมเดลไม่ขึ้น! โปรดตรวจสอบว่าคุณครูแชร์ไฟล์แบบ 'Anyone with the link' หรือยัง?");
+                    alert("โมเดลไม่ขึ้น! 1.เช็คสิทธิ์แชร์เป็น 'Anyone with the link' 2.ไฟล์ต้องเป็น .glb เท่านั้น");
                 });
             }
         } catch (e) {
-            alert("ลิงก์ไม่ถูกต้อง");
             loader.style.display = 'none';
             btn.disabled = false;
+            alert("ลิงก์ไม่ถูกต้อง");
         }
     }
 
@@ -141,7 +142,7 @@
         const questions = [];
         for(let i=0; i<count; i++) {
             const mVal = document.getElementById(`m-${i}`).value;
-            if(!mVal) return alert(`คุณครูยังไม่ได้ตรวจสอบโมเดลในข้อที่ ${i+1} ครับ`);
+            if(!mVal) return alert(`โปรดตรวจสอบโมเดลในข้อที่ ${i+1} ก่อนบันทึกครับ`);
             questions.push({
                 q: document.getElementById(`q-${i}`).value,
                 o: document.getElementById(`o-${i}`).value.split(','),
@@ -149,7 +150,7 @@
                 m: mVal
             });
         }
-        btn.disabled = true; btn.innerHTML = "💾 กำลังบันทึกลงฐานข้อมูล...";
+        btn.disabled = true; btn.innerHTML = "💾 กำลังบันทึก...";
         try {
             await fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -160,20 +161,22 @@
                     questions: questions
                 })
             });
-            alert("บันทึกสำเร็จ! ข้อสอบพร้อมใช้งานแล้วครับ");
+            alert("บันทึกสำเร็จ!");
             loadList();
         } catch(e) { alert("บันทึกไม่สำเร็จ"); }
         btn.disabled = false; btn.innerHTML = "💾 บันทึกชุดข้อสอบลง Google Sheets";
     }
 
     async function loadList() {
-        const res = await fetch(SCRIPT_URL + "?action=list&t=" + Date.now());
-        const list = await res.json();
-        document.getElementById('project-list').innerHTML = list.map(p => `
-            <div class="glass-card" style="margin:0; border-left:6px solid var(--p); padding:15px;">
-                <h4 style="margin:0;">${p.name}</h4>
-                <button class="btn" style="background:#f1f5f9; width:100%; margin-top:10px;" onclick="edit('${p.id}')">📝 แก้ไขข้อสอบ</button>
-            </div>`).join('');
+        try {
+            const res = await fetch(SCRIPT_URL + "?action=list&t=" + Date.now());
+            const list = await res.json();
+            document.getElementById('project-list').innerHTML = list.map(p => `
+                <div class="glass-card" style="margin:0; border-left:6px solid var(--p); padding:15px;">
+                    <h4 style="margin:0;">${p.name}</h4>
+                    <button class="btn" style="background:#f1f5f9; width:100%; margin-top:10px;" onclick="edit('${p.id}')">📝 แก้ไขข้อสอบ</button>
+                </div>`).join('');
+        } catch(e) { console.log("List error"); }
     }
 
     async function edit(id) {
@@ -189,7 +192,7 @@
                 document.getElementById(`o-${i}`).value = q.o.join(',');
                 document.getElementById(`a-${i}`).value = q.a;
                 document.getElementById(`m-${i}`).value = q.m;
-                document.getElementById(`raw-link-${i}`).value = "มีข้อมูลลิงก์เดิมอยู่แล้ว";
+                document.getElementById(`raw-link-${i}`).value = q.m;
                 document.getElementById(`v-${i}`).src = q.m;
             });
         }, 800);
