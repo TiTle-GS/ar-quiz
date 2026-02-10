@@ -1,307 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AR Quiz — Admin</title>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; background:#f6f7fb; color:#222; margin:0; padding:20px; }
-    .wrap { max-width:1100px; margin:0 auto; background:#fff; padding:18px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-    h2 { margin-top:0; }
-    .grid { display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
-    .card { padding:12px; border-radius:8px; background:#fbfdff; border:1px solid #eef5ff; }
-    input, textarea, select, button { width:100%; padding:8px; margin-top:8px; box-sizing:border-box; }
-    .small { font-size:13px; color:#666; }
-    .quiz-list { max-height:420px; overflow:auto; }
-    .quiz-item { padding:8px; border-bottom:1px solid #eef5ff; display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .btn { padding:8px 10px; border:none; border-radius:6px; cursor:pointer; }
-    .btn-primary { background:#2b7cff; color:#fff; }
-    .btn-danger { background:#ff6b6b; color:#fff; }
-    .btn-ghost { background:#f1f5fb; color:#333; }
-  </style>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Quiz Admin v10.0 - Firebase Official</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --p: #0288d1; --g: #2e7d32; --bg: #f8fafc; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; }
+        .btn-blue { background: var(--p); color: white; }
+        .btn-save { background: var(--g); color: white; width: 100%; font-size: 1.2rem; margin-top: 20px; }
+        .q-block { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        .preview { background: #000; border-radius: 15px; height: 300px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; font-family: 'Sarabun'; }
+        .upload-section { margin-top: 15px; background: #f0f9ff; padding: 15px; border-radius: 12px; border: 2px dashed var(--p); }
+        .loader { display: none; flex-direction: column; align-items: center; gap: 10px; color: white; z-index: 10; position: absolute; }
+        .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--p); border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>AR Quiz — Admin</h2>
-    <div class="grid">
-      <div>
-        <div class="card">
-          <h3>สร้าง / แก้ไขชุดข้อสอบ</h3>
-          <label>ชื่อชุดข้อสอบ</label>
-          <input id="quiz-name" placeholder="เช่น วิทย์-ระบบสุริยะ-ม.1" />
-          <label>จำนวนข้อ</label>
-          <input id="quiz-count" type="number" min="1" value="4" />
-          <div id="questions-area" style="margin-top:12px;"></div>
-          <div style="display:flex; gap:8px; margin-top:12px;">
-            <button id="save-quiz" class="btn btn-primary">💾 บันทึกชุดข้อสอบ</button>
-            <button id="clear-form" class="btn btn-ghost">ล้าง</button>
-          </div>
-          <p class="small">หมายเหตุ: ใช้ลิงก์ไฟล์ .glb ที่เป็น direct download หรือ raw.githubusercontent.com</p>
-        </div>
 
-        <div class="card" style="margin-top:12px;">
-          <h3>ทดสอบโมเดล AR (ตัวอย่าง)</h3>
-          <label>วางลิงก์ .glb</label>
-          <input id="test-model-url" placeholder="https://raw.githubusercontent.com/..." />
-          <div style="margin-top:8px;">
-            <model-viewer id="admin-ar" src="" camera-controls style="width:100%; height:240px; background:#000;"></model-viewer>
-          </div>
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button id="test-load" class="btn btn-primary">โหลดโมเดล</button>
-            <button id="convert-drive" class="btn btn-ghost">แปลง Google Drive → Direct</button>
-          </div>
-          <p class="small">ถ้าโมเดลหมุนติ้วๆ ให้ใช้ GitHub raw หรือแปลงเป็น direct download ตามคู่มือ</p>
+<div class="container">
+    <div class="card">
+        <h2 style="color:var(--p); margin-top:0;">🔥 AR Quiz Admin (Firebase System)</h2>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="proj-name" placeholder="ชื่อวิชาหรือชุดข้อสอบ">
+            <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:100px;">
+            <button class="btn btn-blue" onclick="initQuiz()">เริ่มสร้าง</button>
         </div>
-      </div>
-
-      <div>
-        <div class="card">
-          <h3>รายการชุดข้อสอบ</h3>
-          <div class="quiz-list" id="quiz-list"></div>
-        </div>
-
-        <div class="card" style="margin-top:12px;">
-          <h3>จัดการ / วิเคราะห์</h3>
-          <label>เลือกชุดข้อสอบ</label>
-          <select id="select-quiz"></select>
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button id="view-analytics" class="btn btn-primary">ดู Analytics</button>
-            <button id="delete-quiz" class="btn btn-danger">ลบชุดข้อสอบ</button>
-          </div>
-          <div id="analytics-area" style="margin-top:12px;"></div>
-        </div>
-      </div>
     </div>
-  </div>
+    <div id="quiz-area"></div>
+    <button id="save-btn" class="btn btn-save" style="display:none;" onclick="saveData()">💾 บันทึกข้อสอบลง Firebase</button>
+</div>
 
-  <script>
-    // -------------------------
-    // Configuration
-    // -------------------------
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec'; // <-- เปลี่ยนเป็น Web App URL ของคุณ
+<script>
+    // 🚩 เชื่อมต่อรหัสของคุณครูเรียบร้อยแล้ว
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
+        authDomain: "ar-quizz.firebaseapp.com",
+        projectId: "ar-quizz",
+        storageBucket: "ar-quizz.firebasestorage.app", // ปรับตามเวอร์ชันล่าสุดของคุณครู
+        messagingSenderId: "151328581741",
+        appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
+    };
 
-    // -------------------------
-    // Helpers
-    // -------------------------
-    function $(id){ return document.getElementById(id); }
-    function el(tag, cls){ const e = document.createElement(tag); if(cls) e.className = cls; return e; }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
 
-    // -------------------------
-    // Build question inputs
-    // -------------------------
-    function buildQuestions(n, existing = []) {
-      const area = $('questions-area');
-      area.innerHTML = '';
-      for (let i = 0; i < n; i++) {
-        const q = existing[i] || { q: '', o: ['', '', '', ''], a: '', m: '' };
-        const wrapper = el('div');
-        wrapper.style.borderTop = '1px solid #eef5ff';
-        wrapper.style.paddingTop = '8px';
-        wrapper.innerHTML = `
-          <label style="font-weight:600">ข้อที่ ${i+1}</label>
-          <input class="q-text" placeholder="คำถาม" value="${escapeHtml(q.q)}" />
-          <label>ตัวเลือก (คั่นบรรทัด)</label>
-          <textarea class="q-opts" rows="3" placeholder="แต่ละบรรทัดเป็นตัวเลือก">${escapeHtml((q.o||[]).join('\n'))}</textarea>
-          <label>คำตอบที่ถูกต้อง (พิมพ์ข้อความตรงกับตัวเลือก)</label>
-          <input class="q-ans" placeholder="คำตอบที่ถูกต้อง" value="${escapeHtml(q.a)}" />
-          <label>ลิงก์โมเดล .glb (direct/raw)</label>
-          <input class="q-model" placeholder="https://..." value="${escapeHtml(q.m)}" />
-        `;
-        area.appendChild(wrapper);
-      }
+    function initQuiz() {
+        const n = document.getElementById('q-count').value;
+        const area = document.getElementById('quiz-area');
+        if(!n || n <= 0) return;
+        area.innerHTML = '';
+        for(let i=0; i<n; i++) {
+            area.innerHTML += `
+                <div class="card q-block">
+                    <div>
+                        <h3 style="color:var(--p)">ข้อที่ ${i+1}</h3>
+                        <textarea id="q-${i}" placeholder="คำถาม"></textarea>
+                        <input type="text" id="o-${i}" placeholder="ตัวเลือก (แยกด้วยคอมม่า)">
+                        <input type="text" id="a-${i}" placeholder="คำตอบ">
+                        <div class="upload-section">
+                            <label>📁 เลือกไฟล์ .glb (3.2MB)</label>
+                            <input type="file" id="f-${i}" accept=".glb" onchange="uploadFile(${i})">
+                            <input type="hidden" id="m-${i}">
+                            <p id="status-${i}" style="font-size:12px; color:gray; margin-top:5px;">รอการอัปโหลด...</p>
+                        </div>
+                    </div>
+                    <div class="preview">
+                        <div class="loader" id="ld-${i}"><div class="spinner"></div><span>กำลังส่งไฟล์...</span></div>
+                        <model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer>
+                    </div>
+                </div>`;
+        }
+        document.getElementById('save-btn').style.display = 'block';
     }
 
-    function escapeHtml(s){ if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    async function uploadFile(i) {
+        const file = document.getElementById(`f-${i}`).files[0];
+        if(!file) return;
 
-    // initial
-    buildQuestions(parseInt($('quiz-count').value,10) || 4);
+        const loader = document.getElementById(`ld-${i}`);
+        const status = document.getElementById(`status-${i}`);
+        loader.style.display = 'flex';
+        status.innerText = "⏳ กำลังอัปโหลดไฟล์ไปที่ Firebase...";
 
-    $('quiz-count').addEventListener('change', () => {
-      const n = Math.max(1, parseInt($('quiz-count').value,10) || 1);
-      buildQuestions(n);
-    });
-
-    // -------------------------
-    // Save quiz
-    // -------------------------
-    $('save-quiz').addEventListener('click', async () => {
-      const name = $('quiz-name').value.trim();
-      if (!name) return alert('กรุณากรอกชื่อชุดข้อสอบ');
-      const qEls = document.querySelectorAll('#questions-area > div');
-      const questions = [];
-      qEls.forEach((wrap, idx) => {
-        const qText = wrap.querySelector('.q-text').value.trim();
-        const opts = wrap.querySelector('.q-opts').value.split('\n').map(s=>s.trim()).filter(Boolean);
-        const ans = wrap.querySelector('.q-ans').value.trim();
-        const model = wrap.querySelector('.q-model').value.trim();
-        questions.push({ q: qText, o: opts, a: ans, m: model });
-      });
-
-      const payload = { type: 'SAVE_QUIZ', id: null, name: name, questions: questions };
-      try {
-        const res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (data && data.status) {
-          alert('บันทึกสำเร็จ: ' + data.id);
-          loadQuizzes();
-        } else {
-          alert('บันทึกไม่สำเร็จ');
+        const storageRef = storage.ref('ar_models/' + Date.now() + "_" + file.name);
+        try {
+            const snapshot = await storageRef.put(file);
+            const url = await snapshot.ref.getDownloadURL();
+            
+            document.getElementById(`m-${i}`).value = url;
+            document.getElementById(`v-${i}`).src = url;
+            status.innerText = "✅ อัปโหลดสำเร็จ!";
+            status.style.color = "green";
+        } catch (e) {
+            alert("อัปโหลดไม่สำเร็จ! อย่าลืมไปที่หน้า Storage > Rules แล้วแก้เป็น allow read, write: if true; นะครับ");
+            status.innerText = "❌ เกิดข้อผิดพลาด";
         }
-      } catch (e) {
-        console.error(e);
-        alert('เกิดข้อผิดพลาดขณะบันทึก');
-      }
-    });
-
-    // -------------------------
-    // Load quizzes list
-    // -------------------------
-    async function loadQuizzes() {
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=list&t=${Date.now()}`);
-        const data = await res.json();
-        const list = $('quiz-list');
-        const sel = $('select-quiz');
-        list.innerHTML = '';
-        sel.innerHTML = '<option value="">-- เลือกชุดข้อสอบ --</option>';
-        (data || []).forEach(q => {
-          const item = el('div','quiz-item');
-          const left = el('div');
-          left.innerHTML = `<strong>${q.name}</strong><div class="small">ID: ${q.id} • ข้อ: ${q.count}</div>`;
-          const right = el('div');
-          const btnEdit = el('button','btn btn-ghost'); btnEdit.textContent = 'แก้ไข';
-          const btnDel = el('button','btn btn-danger'); btnDel.textContent = 'ลบ';
-          btnEdit.addEventListener('click', ()=> loadQuizToForm(q.id));
-          btnDel.addEventListener('click', ()=> deleteQuiz(q.id));
-          right.appendChild(btnEdit); right.appendChild(btnDel);
-          item.appendChild(left); item.appendChild(right);
-          list.appendChild(item);
-
-          const opt = el('option'); opt.value = q.id; opt.textContent = `${q.name} (${q.id})`;
-          sel.appendChild(opt);
-        });
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    loadQuizzes();
-
-    // -------------------------
-    // Load single quiz to form (edit)
-    // -------------------------
-    async function loadQuizToForm(id) {
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=getQuiz&id=${encodeURIComponent(id)}&t=${Date.now()}`);
-        const data = await res.json();
-        if (data && data.id) {
-          $('quiz-name').value = data.name || '';
-          const qs = data.questions || [];
-          $('quiz-count').value = qs.length || 1;
-          buildQuestions(qs.length || 1, qs);
-          // store id on save button for update
-          $('save-quiz').dataset.editId = data.id;
-          alert('โหลดข้อมูลชุดข้อสอบเรียบร้อย สามารถแก้ไขแล้วกดบันทึก');
-        } else {
-          alert('ไม่พบชุดข้อสอบ');
-        }
-      } catch (e) {
-        console.error(e);
-        alert('โหลดข้อมูลล้มเหลว');
-      }
+        loader.style.display = 'none';
     }
 
-    // -------------------------
-    // Delete quiz
-    // -------------------------
-    async function deleteQuiz(id) {
-      if (!confirm('ต้องการลบชุดข้อสอบนี้จริงหรือไม่?')) return;
-      try {
-        const payload = { type: 'DELETE_QUIZ', id: id };
-        const res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (data && data.status) {
-          alert('ลบเรียบร้อย');
-          loadQuizzes();
-        } else {
-          alert('ลบไม่สำเร็จ');
+    async function saveData() {
+        const name = document.getElementById('proj-name').value;
+        if(!name) return alert("กรุณาใส่ชื่อชุดข้อสอบ");
+        
+        const count = document.getElementById('q-count').value;
+        const questions = [];
+        for(let i=0; i<count; i++) {
+            questions.push({
+                q: document.getElementById(`q-${i}`).value,
+                o: document.getElementById(`o-${i}`).value.split(','),
+                a: document.getElementById(`a-${i}`).value,
+                m: document.getElementById(`m-${i}`).value
+            });
         }
-      } catch (e) {
-        console.error(e);
-        alert('เกิดข้อผิดพลาดขณะลบ');
-      }
+
+        try {
+            await db.ref('quizzes').push({ name: name, questions: questions });
+            alert("บันทึกเรียบร้อย! ระบบ Firebase เสถียรพร้อมใช้สอนแล้วครับ");
+            window.location.reload();
+        } catch (e) { alert("บันทึกล้มเหลว"); }
     }
-
-    // -------------------------
-    // View analytics
-    // -------------------------
-    $('view-analytics').addEventListener('click', async () => {
-      const id = $('select-quiz').value;
-      if (!id) return alert('เลือกชุดข้อสอบก่อน');
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=getQuizStatistics&id=${encodeURIComponent(id)}&t=${Date.now()}`);
-        const data = await res.json();
-        const area = $('analytics-area');
-        if (data.error) {
-          area.innerHTML = `<div class="small">ไม่มีข้อมูล</div>`;
-          return;
-        }
-        area.innerHTML = `
-          <div><strong>นักเรียนทั้งหมด:</strong> ${data.totalStudents}</div>
-          <div><strong>คะแนนเฉลี่ย:</strong> ${data.avgScore}</div>
-          <div><strong>ประเภทผู้เรียน:</strong> ${Object.entries(data.learnerTypes).map(([k,v])=>`${k}: ${v}`).join(', ')}</div>
-        `;
-      } catch (e) {
-        console.error(e);
-        alert('ดึงสถิติไม่สำเร็จ');
-      }
-    });
-
-    // -------------------------
-    // Test model load & convert Drive link
-    // -------------------------
-    $('test-load').addEventListener('click', () => {
-      const url = $('test-model-url').value.trim();
-      if (!url) return alert('วางลิงก์โมเดลก่อน');
-      const mv = document.getElementById('admin-ar');
-      try {
-        mv.setAttribute('src', url);
-        if (typeof mv.load === 'function') mv.load();
-      } catch (e) {
-        console.warn(e);
-      }
-    });
-
-    $('convert-drive').addEventListener('click', () => {
-      const url = $('test-model-url').value.trim();
-      if (!url) return alert('วางลิงก์ Google Drive ก่อน');
-      // try to extract file id
-      const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (m && m[1]) {
-        const id = m[1];
-        const direct = `https://drive.google.com/uc?export=download&id=${id}`;
-        $('test-model-url').value = direct;
-        alert('แปลงลิงก์เป็น direct download แล้ว (วางลิงก์นี้ในช่องโมเดลของข้อสอบ)');
-      } else {
-        alert('ไม่พบ File ID ในลิงก์ กรุณาใช้ลิงก์แบบ https://drive.google.com/file/d/FILE_ID/view');
-      }
-    });
-
-    // -------------------------
-    // Clear form
-    // -------------------------
-    $('clear-form').addEventListener('click', () => {
-      if (!confirm('ล้างฟอร์ม?')) return;
-      $('quiz-name').value = '';
-      $('quiz-count').value = 4;
-      buildQuestions(4);
-      delete $('save-quiz').dataset.editId;
-    });
-
-    // -------------------------
-    // On load
-    // -------------------------
-    loadQuizzes();
-  </script>
+</script>
 </body>
 </html>
