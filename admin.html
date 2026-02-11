@@ -2,37 +2,35 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>AR Admin v12.2 - Fixed CORS</title>
+    <title>AR Admin (Drive + Firebase Mode)</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #f1f5f9; padding: 20px; }
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
-        .btn-blue { background: #0288d1; color: white; }
-        .btn-save { background: #2e7d32; color: white; width: 100%; margin-top: 20px; }
-        .q-block { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-        .preview { background: #000; border-radius: 15px; height: 300px; display: flex; align-items: center; justify-content: center; position: relative; }
-        input, textarea { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; }
-        .loader { display: none; color: white; position: absolute; }
+        body { font-family: 'Sarabun', sans-serif; background: #f0f7ff; padding: 20px; }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-blue { background: #039be5; color: white; }
+        .btn-save { background: #4caf50; color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; }
+        .preview { background: #000; height: 250px; border-radius: 10px; margin-top: 10px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2>🪄 AR Admin (Fixed CORS)</h2>
+        <h2>🪄 AR Admin (Drive + Firebase)</h2>
+        <p style="color:red; font-size:12px;">*วิธีนี้ไม่ต้องจ่ายเงิน ใช้ Google Drive เก็บไฟล์โมเดล</p>
         <div style="display: flex; gap: 10px;">
-            <input type="text" id="proj-name" placeholder="ระบุชื่อชุดข้อสอบ">
-            <input type="number" id="q-count" placeholder="จำนวนข้อ (1 ขึ้นไป)" min="1">
-            <button class="btn btn-blue" onclick="initQuiz()">🚀 สร้างช่องกรอก</button>
+            <input type="text" id="proj-name" placeholder="ชื่อชุดข้อสอบ">
+            <input type="number" id="q-count" placeholder="จำนวนข้อ" min="1">
+            <button class="btn btn-blue" onclick="initQuiz()">🚀 สร้าง</button>
         </div>
     </div>
     <div id="quiz-area"></div>
-    <button id="save-btn" class="btn btn-save" style="display:none;" onclick="saveAll()">💾 บันทึกชุดข้อสอบ</button>
+    <button id="save-btn" class="btn btn-save" style="display:none;" onclick="saveData()">💾 บันทึกชุดข้อสอบลง Firebase</button>
 </div>
 
 <script>
@@ -48,64 +46,39 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
 
-    // 🛠️ ตรวจสอบจำนวนข้อสอบ (ห้าม 0 หรือติดลบ)
     window.initQuiz = function() {
         const n = parseInt(document.getElementById('q-count').value);
-        if (isNaN(n) || n <= 0) {
-            alert("⚠️ โปรดระบุจำนวนข้อสอบตั้งแต่ 1 ข้อขึ้นไปครับ");
-            return;
-        }
+        if (isNaN(n) || n <= 0) return alert("โปรดระบุจำนวนข้อตั้งแต่ 1 ขึ้นไป");
+        
         const area = document.getElementById('quiz-area');
         area.innerHTML = '';
         for(let i=0; i<n; i++) {
             area.innerHTML += `
-                <div class="card q-block">
-                    <div>
-                        <h3>ข้อที่ ${i+1}</h3>
-                        <textarea id="q-${i}" placeholder="โจทย์"></textarea>
-                        <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง)">
-                        <input type="text" id="a-${i}" placeholder="คำตอบ">
-                        <div style="margin-top:15px; border:2px dashed #0288d1; padding:10px; border-radius:10px;">
-                            <input type="file" id="f-${i}" accept=".glb" onchange="uploadFile(${i})">
-                            <input type="hidden" id="m-${i}">
-                        </div>
-                    </div>
-                    <div class="preview">
-                        <div class="loader" id="ld-${i}">⏳ โหลดไฟล์...</div>
-                        <model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer>
-                    </div>
+                <div class="card">
+                    <h3>ข้อที่ ${i+1}</h3>
+                    <textarea id="q-${i}" placeholder="โจทย์คำถาม"></textarea>
+                    <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง)">
+                    <input type="text" id="a-${i}" placeholder="คำตอบที่ถูก">
+                    <input type="text" id="m-${i}" placeholder="วางลิงก์ Google Drive จากปุ่ม Share" oninput="checkModel(${i}, this.value)">
+                    <div class="preview"><model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer></div>
                 </div>`;
         }
         document.getElementById('save-btn').style.display = 'block';
     }
 
-    // 🚀 อัปโหลดและแก้ CORS ด้วยเทคนิค Direct Link
-    window.uploadFile = async function(i) {
-        const file = document.getElementById(`f-${i}`).files[0];
-        if(!file) return;
-        document.getElementById(`ld-${i}`).style.display = 'block';
-
-        const storageRef = storage.ref('ar_models/' + Date.now() + "_" + file.name);
-        try {
-            const snapshot = await storageRef.put(file);
-            
-            // ✨ เทคนิคแก้ CORS: ใช้ลิงก์ดาวน์โหลดตรงที่มีพารามิเตอร์ alt=media
-            const bucket = firebaseConfig.storageBucket;
-            const fullPath = encodeURIComponent(snapshot.metadata.fullPath);
-            const directLink = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${fullPath}?alt=media`;
-            
-            document.getElementById(`m-${i}`).value = directLink;
-            document.getElementById(`v-${i}`).src = directLink;
-            
-            document.getElementById(`v-${i}`).addEventListener('load', () => {
-                document.getElementById(`ld-${i}`).style.display = 'none';
-            });
-        } catch (e) { alert("อัปโหลดไม่สำเร็จ!"); }
+    window.checkModel = function(i, url) {
+        if(url.includes("drive.google.com")) {
+            try {
+                const fileId = url.split('/d/')[1].split('/')[0];
+                const directLink = `https://drive.google.com/uc?id=${fileId}`;
+                document.getElementById(`v-${i}`).src = directLink;
+                document.getElementById(`m-${i}`).dataset.realUrl = directLink;
+            } catch(e) { console.log("URL Error"); }
+        }
     }
 
-    window.saveAll = async function() {
+    window.saveData = async function() {
         const name = document.getElementById('proj-name').value;
         const n = parseInt(document.getElementById('q-count').value);
         const questions = [];
@@ -114,11 +87,11 @@
                 q: document.getElementById(`q-${i}`).value,
                 o: document.getElementById(`o-${i}`).value.split(','),
                 a: document.getElementById(`a-${i}`).value,
-                m: document.getElementById(`m-${i}`).value
+                m: document.getElementById(`m-${i}`).dataset.realUrl || document.getElementById(`m-${i}`).value
             });
         }
         await db.ref('quizzes').push({ name: name, questions: questions });
-        alert("บันทึกสำเร็จ!");
+        alert("✅ บันทึกสำเร็จ! ข้อมูลไปโผล่ใน Firebase แล้วครับ");
         location.reload();
     }
 </script>
