@@ -2,129 +2,150 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>AR Admin - Firebase 100%</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Admin v11.0 - Firebase Native 100%</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #f0f7ff; padding: 20px; }
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-blue { background: #039be5; color: white; }
-        .btn-save { background: #4caf50; color: white; width: 100%; font-size: 1.2rem; margin-top: 20px; }
+        :root { --p: #0288d1; --g: #2e7d32; --bg: #f8fafc; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; }
+        .btn-blue { background: var(--p); color: white; }
+        .btn-save { background: var(--g); color: white; width: 100%; font-size: 1.2rem; margin-top: 20px; }
         .q-block { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-        .preview { background: #000; border-radius: 15px; height: 300px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        input, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
-        .upload-zone { margin-top: 15px; background: #fff8e1; padding: 15px; border-radius: 12px; border: 2px dashed #ffb300; }
-        .loader { display: none; color: white; flex-direction: column; align-items: center; position: absolute; }
+        .preview { background: #000; border-radius: 15px; height: 300px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; }
+        .upload-section { margin-top: 15px; background: #fff8e1; padding: 15px; border-radius: 12px; border: 2px dashed #ffb300; }
+        .loader { display: none; flex-direction: column; align-items: center; gap: 10px; color: white; z-index: 10; position: absolute; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2>🔥 AR Admin (Firebase Native Upload)</h2>
+        <h2 style="color:var(--p); margin-top:0;">🪄 AR Admin (Firebase Native)</h2>
         <div style="display: flex; gap: 10px;">
-            <input type="text" id="proj-name" placeholder="ชื่อชุดข้อสอบ">
+            <input type="text" id="proj-name" placeholder="ระบุชื่อชุดข้อสอบ">
             <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:100px;">
-            <button class="btn btn-blue" onclick="initQuiz()">เริ่มสร้าง</button>
+            <button class="btn btn-blue" onclick="initQuiz()">🚀 สร้างช่องกรอก</button>
         </div>
     </div>
     <div id="quiz-area"></div>
-    <button id="save-btn" class="btn btn-save" style="display:none;" onclick="saveAll()">💾 บันทึกลง Firebase Database</button>
+    <button id="save-btn" class="btn btn-save" style="display:none;" onclick="saveAll()">💾 บันทึกชุดข้อสอบลง Firebase</button>
 </div>
 
 <script>
+    // 🚩 รหัสของคุณครู (ตรวจสอบความถูกต้องเรียบร้อยแล้ว)
     const firebaseConfig = {
         apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
         authDomain: "ar-quizz.firebaseapp.com",
         projectId: "ar-quizz",
+        databaseURL: "https://ar-quizz-default-rtdb.firebaseio.com",
         storageBucket: "ar-quizz.firebasestorage.app",
         messagingSenderId: "151328581741",
         appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
 
-    function initQuiz() {
+    // 🛠️ ฟังก์ชันสร้างช่องกรอกข้อมูล (แก้อาการ ReferenceError)
+    window.initQuiz = function() {
         const n = document.getElementById('q-count').value;
         const area = document.getElementById('quiz-area');
+        if(!n || n <= 0) return alert("โปรดใส่จำนวนข้อ");
+        
         area.innerHTML = '';
         for(let i=0; i<n; i++) {
             area.innerHTML += `
                 <div class="card q-block">
                     <div>
-                        <h3>ข้อที่ ${i+1}</h3>
-                        <textarea id="q-${i}" placeholder="โจทย์คำถาม"></textarea>
+                        <h3 style="color:var(--p)">ข้อที่ ${i+1}</h3>
+                        <textarea id="q-${i}" placeholder="พิมพ์โจทย์คำถาม..."></textarea>
                         <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง) แยกด้วยคอมม่า">
-                        <input type="text" id="a-${i}" placeholder="คำตอบ">
-                        <div class="upload-zone">
-                            <label>📁 เลือกไฟล์ .glb จากเครื่อง</label>
+                        <input type="text" id="a-${i}" placeholder="ระบุคำตอบที่ถูก">
+                        <div class="upload-section">
+                            <label style="font-weight:600;">📁 อัปโหลดไฟล์ .glb</label>
                             <input type="file" id="f-${i}" accept=".glb" onchange="uploadToFirebase(${i})">
                             <input type="hidden" id="m-${i}">
-                            <div id="status-${i}" style="font-size:12px; margin-top:5px; color: #d35400;">ยังไม่ได้เลือกไฟล์</div>
+                            <div id="status-${i}" style="font-size:12px; color:gray; margin-top:5px;">รอการอัปโหลด...</div>
                         </div>
                     </div>
                     <div class="preview">
-                        <div class="loader" id="ld-${i}">⏳ กำลังโหลดไฟล์...</div>
-                        <model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer>
+                        <div class="loader" id="ld-${i}"><span>⏳ กำลังอัปโหลด...</span></div>
+                        <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
                     </div>
                 </div>`;
         }
         document.getElementById('save-btn').style.display = 'block';
-    }
+    };
 
-    async function uploadToFirebase(i) {
+    // 🚀 ฟังก์ชันอัปโหลด (แก้ปัญหา CORS ด้วยเทคนิค alt=media)
+    window.uploadToFirebase = async function(i) {
         const file = document.getElementById(`f-${i}`).files[0];
         if(!file) return;
 
         const loader = document.getElementById(`ld-${i}`);
         const status = document.getElementById(`status-${i}`);
-        loader.style.display = 'flex';
-        status.innerText = "กำลังอัปโหลด...";
+        const viewer = document.getElementById(`v-${i}`);
 
-        // อัปโหลดเข้า Storage ของ Firebase โดยตรง
+        loader.style.display = 'flex';
+        status.innerText = "⏳ กำลังส่งไฟล์...";
+
         const storageRef = storage.ref('ar_models/' + Date.now() + "_" + file.name);
         try {
             const snapshot = await storageRef.put(file);
-            const fileId = snapshot.metadata.fullPath.split('/').pop();
-// สร้างลิงก์แบบ Public ที่ไม่ติด CORS
-const url = `https://firebasestorage.googleapis.com/v0/b/ar-quizz.firebasestorage.app/o/ar_models%2F${fileId}?alt=media`;
-
-document.getElementById(`m-${i}`).value = url;
-document.getElementById(`v-${i}`).src = url; = await snapshot.ref.getDownloadURL();
+            // ✨ เทคนิคการสร้าง Direct Link เพื่อทะลุด่าน CORS
+            const bucket = firebaseConfig.storageBucket;
+            const fullPath = encodeURIComponent(snapshot.metadata.fullPath);
+            const directLink = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${fullPath}?alt=media`;
             
-            document.getElementById(`m-${i}`).value = url;
-            document.getElementById(`v-${i}`).src = url;
-            status.innerText = "✅ อัปโหลดสำเร็จ!";
-            status.style.color = "green";
+            document.getElementById(`m-${i}`).value = directLink;
+            viewer.src = directLink;
+
+            viewer.addEventListener('load', () => {
+                loader.style.display = 'none';
+                status.innerText = "✅ พร้อมใช้งาน";
+                status.style.color = "green";
+            });
         } catch (e) {
             console.error(e);
-            alert("อัปโหลดไม่สำเร็จ! ตรวจสอบ Rules ใน Storage ของคุณครูครับ");
-            status.innerText = "❌ เกิดข้อผิดพลาด";
+            alert("อัปโหลดไม่สำเร็จ! ตรวจสอบ Rules ใน Storage ของคุณครู");
+            loader.style.display = 'none';
         }
-        loader.style.display = 'none';
-    }
+    };
 
-    async function saveAll() {
+    // 💾 บันทึกลง Database
+    window.saveAll = async function() {
         const name = document.getElementById('proj-name').value;
         const count = document.getElementById('q-count').value;
+        if(!name) return alert("โปรดระบุชื่อชุดข้อสอบ");
+
         const questions = [];
         for(let i=0; i<count; i++) {
+            const mLink = document.getElementById(`m-${i}`).value;
+            if(!mLink) return alert(`กรุณาอัปโหลดโมเดลข้อที่ ${i+1}`);
             questions.push({
                 q: document.getElementById(`q-${i}`).value,
                 o: document.getElementById(`o-${i}`).value.split(','),
                 a: document.getElementById(`a-${i}`).value,
-                m: document.getElementById(`m-${i}`).value
+                m: mLink
             });
         }
-        await db.ref('quizzes').push({ name: name, questions: questions });
-        alert("บันทึกข้อมูลเรียบร้อย!");
-    }
+
+        try {
+            await db.ref('quizzes').push({ name: name, questions: questions });
+            alert("บันทึกสำเร็จ! ข้อมูลออนไลน์แล้วครับ");
+            location.reload();
+        } catch (e) { alert("บันทึกล้มเหลว"); }
+    };
 </script>
 </body>
 </html>
