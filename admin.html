@@ -3,57 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Admin Master</title>
+    <title>AR Quiz - Student Portal</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --p: #0288d1; --s: #2e7d32; --bg: #f8fafc; --edit: #ff9800; --copy: #673ab7; --export: #607d8b; }
-        body { font-family: 'Sarabun', sans-serif; background: var(--bg); padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .quiz-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; background: #fff; margin-bottom: 10px; border-radius: 10px; }
-        .btn { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-family: 'Sarabun'; transition: 0.2s; font-size: 14px; }
-        .btn-blue { background: var(--p); color: white; }
-        .btn-green { background: var(--s); color: white; width: 100%; font-size: 1.1rem; }
-        .btn-edit { background: var(--edit); color: white; margin-right: 5px; }
-        .btn-copy { background: var(--copy); color: white; margin-right: 5px; }
-        .btn-export { background: var(--export); color: white; margin-right: 5px; }
-        .btn-del { background: #ef5350; color: white; }
-        .preview-box { background: #000; height: 250px; border-radius: 10px; margin-top: 10px; }
-        input, textarea { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; }
-        .badge { background: #e0f2f1; color: #00695c; padding: 4px 10px; border-radius: 5px; font-size: 13px; }
-        .action-group { display: flex; gap: 0px; }
+        :root { --p: #0288d1; --bg: #f0f4f8; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 500px; margin: 0 auto; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; }
+        .btn-start { background: var(--p); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        #viewer-container { width: 100%; height: 300px; background: #000; border-radius: 15px; margin-bottom: 20px; }
+        .choice-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; background: white; cursor: pointer; text-align: left; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 style="color: var(--p); text-align: center;">⚙️ ระบบจัดการข้อสอบ AR</h1>
+<div id="login-page" class="card">
+    <h2 style="color:var(--p);">📝 เริ่มทำข้อสอบ</h2>
+    <input type="text" id="student-name" placeholder="ชื่อ-นามสกุล">
+    <input type="text" id="quiz-id" placeholder="รหัสข้อสอบ (ID)">
+    <button class="btn-start" onclick="checkQuiz()">เข้าสู่ห้องสอบ</button>
+</div>
 
-    <div class="card" id="editor-section">
-        <h3 id="editor-title" style="color:var(--p); margin-top:0;">➕ สร้างชุดข้อสอบใหม่</h3>
-        <div id="setup-inputs">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="proj-name" placeholder="ชื่อชุดข้อสอบ">
-                <input type="number" id="q-count" placeholder="จำนวนข้อ" min="1" style="width:120px;">
-                <button class="btn btn-blue" id="init-btn" onclick="initQuiz()">เริ่มสร้างฟอร์ม</button>
-            </div>
-        </div>
-        <div id="quiz-area"></div>
-        <div id="action-buttons" style="display:none; margin-top:20px; gap:10px;">
-            <button class="btn btn-green" id="save-btn" onclick="saveData()">💾 บันทึกและอัปเดตคลังข้อสอบ</button>
-            <button class="btn btn-del" onclick="cancelEdit()" style="width:120px;">ยกเลิก</button>
-        </div>
+<div id="quiz-page" style="display:none;" class="card">
+    <div id="viewer-container">
+        <model-viewer id="ar-v" camera-controls ar shadow-intensity="1" auto-rotate style="width:100%; height:100%;"></model-viewer>
     </div>
-
-    <div id="dashboard-section">
-        <div class="card">
-            <h3 style="color:var(--s); margin-top:0;">📂 คลังข้อสอบของคุณครู</h3>
-            <div id="quiz-list-admin">กำลังโหลดข้อมูล...</div>
-        </div>
-    </div>
+    <h3 id="q-text">กำลังโหลด...</h3>
+    <div id="options-area"></div>
 </div>
 
 <script>
@@ -66,132 +45,81 @@
         messagingSenderId: "151328581741",
         appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let currentEditId = null;
 
-    function loadDashboard() {
-        db.ref('quizzes').on('value', (snapshot) => {
-            const data = snapshot.val();
-            const listArea = document.getElementById('quiz-list-admin');
-            listArea.innerHTML = '';
-            if (!data) { listArea.innerHTML = 'ยังไม่มีข้อสอบในคลัง'; return; }
-            for (let id in data) {
-                listArea.innerHTML += `
-                    <div class="quiz-item">
-                        <div>
-                            <strong>${data[id].name}</strong> <span class="badge">${data[id].questions.length} ข้อ</span><br>
-                            <small style="color:gray;">ID: ${id}</small>
-                        </div>
-                        <div class="action-group">
-                            <button class="btn btn-copy" onclick="copyId('${id}')">📋 คัดลอก ID</button>
-                            <button class="btn btn-edit" onclick="editQuiz('${id}')">📝 แก้ไข</button>
-                            <button class="btn btn-export" onclick="exportData('${id}')">📊 Export</button>
-                            <button class="btn btn-del" onclick="deleteQuiz('${id}')">🗑️ ลบ</button>
-                        </div>
-                    </div>`;
-            }
+    let questions = [];
+    let currentIdx = 0;
+    let studentName = "";
+    let quizId = "";
+    
+    // --- ตัวแปรเก็บพฤติกรรม (Analytics) ---
+    let startTime, moveCount = 0, arUsed = "No";
+
+    window.checkQuiz = function() {
+        studentName = document.getElementById('student-name').value;
+        quizId = document.getElementById('quiz-id').value.trim();
+        if(!studentName || !quizId) return alert("กรุณากรอกข้อมูล");
+
+        db.ref('quizzes/' + quizId).once('value', (s) => {
+            if(s.val()) {
+                questions = s.val().questions;
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('quiz-page').style.display = 'block';
+                startQuestion();
+            } else alert("ไม่พบรหัสข้อสอบ");
         });
     }
 
-    // --- ฟังก์ชัน Export ข้อมูลพฤติกรรม ---
-    window.exportData = function(quizId) {
-        db.ref('student_logs').orderByChild('quizId').equalTo(quizId).once('value', (snapshot) => {
-            const logs = snapshot.val();
-            if (!logs) return alert("ยังไม่มีข้อมูลนักเรียนสำหรับข้อสอบชุดนี้");
+    function startQuestion() {
+        if(currentIdx >= questions.length) {
+            alert("บันทึกคำตอบเรียบร้อยแล้ว");
+            location.reload();
+            return;
+        }
+        startTime = Date.now(); // เริ่มจับเวลา
+        moveCount = 0; arUsed = "No"; // รีเซ็ตพฤติกรรมใหม่ทุกข้อ
+        
+        const q = questions[currentIdx];
+        document.getElementById('q-text').innerText = q.q;
+        const viewer = document.getElementById('ar-v');
+        viewer.src = q.m;
 
-            let csv = "\uFEFFName,Q_No,Time(s),Moves,AR_On,Correct,Confidence,Date\n";
-            for (let id in logs) {
-                const r = logs[id];
-                csv += `${r.name},${r.qIdx+1},${r.time},${r.moves},${r.ar},${r.correct},${r.confidence},${r.timestamp}\n`;
-            }
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Report_${quizId}.csv`;
-            link.click();
-        });
-    }
+        // ดักจับการใช้ AR และการหมุนโมเดล
+        viewer.addEventListener('ar-status', (e) => { if(e.detail.status === 'session-started') arUsed = "Yes"; });
+        viewer.addEventListener('camera-change', () => { moveCount++; });
 
-    window.copyId = function(id) {
-        navigator.clipboard.writeText(id).then(() => alert("คัดลอกรหัสข้อสอบแล้ว"));
-    }
-
-    window.editQuiz = function(id) {
-        db.ref('quizzes/' + id).once('value', (snapshot) => {
-            const data = snapshot.val();
-            currentEditId = id;
-            document.getElementById('dashboard-section').style.display = 'none';
-            document.getElementById('setup-inputs').style.display = 'none';
-            document.getElementById('editor-title').innerText = "📝 กำลังแก้ไข: " + data.name;
-            document.getElementById('proj-name').value = data.name;
-            document.getElementById('q-count').value = data.questions.length;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            initQuiz(data.questions);
-        });
-    }
-
-    window.initQuiz = function(existingData = null) {
-        const n = existingData ? existingData.length : parseInt(document.getElementById('q-count').value);
-        if (isNaN(n) || n <= 0) return alert("โปรดใส่จำนวนข้อ");
-        const area = document.getElementById('quiz-area');
+        const area = document.getElementById('options-area');
         area.innerHTML = '';
-        for(let i=0; i<n; i++) {
-            const d = existingData ? existingData[i] : {q:'', o:[], a:'', m:''};
-            area.innerHTML += `
-                <div style="border:1px solid #eee; padding:20px; border-radius:12px; margin-top:15px; background:#fafafa;">
-                    <h4 style="color:var(--p); margin:0;">ข้อที่ ${i+1}</h4>
-                    <textarea id="q-${i}" placeholder="โจทย์คำถาม">${d.q}</textarea>
-                    <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง)" value="${d.o.join(',')}">
-                    <input type="text" id="a-${i}" placeholder="คำตอบ" value="${d.a}">
-                    <input type="text" id="m-${i}" placeholder="ลิงก์โมเดล .glb" oninput="updateV(${i}, this.value)" value="${d.m}">
-                    <div class="preview-box"><model-viewer id="v-${i}" src="${d.m}" camera-controls ar style="width:100%; height:100%;"></model-viewer></div>
-                </div>`;
-        }
-        document.getElementById('action-buttons').style.display = 'flex';
+        q.o.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = opt;
+            btn.onclick = () => submitAnswer(opt, q.a);
+            area.appendChild(btn);
+        });
     }
 
-    window.saveData = async function() {
-        const name = document.getElementById('proj-name').value;
-        const n = parseInt(document.getElementById('q-count').value);
-        const questions = [];
-        for(let i=0; i<n; i++) {
-            questions.push({
-                q: document.getElementById(`q-${i}`).value,
-                o: document.getElementById(`o-${i}`).value.split(','),
-                a: document.getElementById(`a-${i}`).value,
-                m: document.getElementById(`v-${i}`).src
-            });
-        }
-        if (currentEditId) await db.ref('quizzes/' + currentEditId).set({ name, questions });
-        else await db.ref('quizzes').push({ name, questions });
-        alert("✅ สำเร็จ!");
-        cancelEdit();
-    }
+    function submitAnswer(chosen, correct) {
+        const timeSpent = Math.floor((Date.now() - startTime) / 1000); // คำนวณวินาที
+        const isCorrect = (chosen.trim() === correct.trim()) ? 1 : 0;
+        
+        // ส่งข้อมูลพฤติกรรมเข้า student_logs
+        db.ref('student_logs').push({
+            name: studentName,
+            quizId: quizId,
+            qIdx: currentIdx,
+            time: timeSpent, // 1. ระยะเวลา
+            moves: moveCount, // 2. การตอบสนอง
+            ar: arUsed,       // 3. การใช้ AR
+            correct: isCorrect, // 4. ความถูกต้อง
+            confidence: (isCorrect && timeSpent < 10) ? "High" : "Normal", // 5. ความมั่นใจ (ประเมินเบื้องต้น)
+            timestamp: new Date().toLocaleString() // 6. ลำดับเวลา
+        });
 
-    window.updateV = function(i, url) {
-        if(url.includes("drive.google.com")) {
-            const id = url.split('/d/')[1].split('/')[0];
-            document.getElementById(`v-${i}`).src = `https://drive.google.com/uc?id=${id}`;
-        } else {
-            document.getElementById(`v-${i}`).src = url;
-        }
+        currentIdx++;
+        startQuestion();
     }
-
-    window.cancelEdit = function() {
-        currentEditId = null;
-        document.getElementById('dashboard-section').style.display = 'block';
-        document.getElementById('setup-inputs').style.display = 'block';
-        document.getElementById('editor-title').innerText = "➕ สร้างชุดข้อสอบใหม่";
-        document.getElementById('proj-name').value = "";
-        document.getElementById('q-count').value = "";
-        document.getElementById('quiz-area').innerHTML = "";
-        document.getElementById('action-buttons').style.display = "none";
-    }
-
-    window.deleteQuiz = function(id) { if(confirm('ลบ?')) db.ref('quizzes/' + id).remove(); }
-    loadDashboard();
 </script>
 </body>
 </html>
