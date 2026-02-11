@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Admin v12.0 - Firebase High Stability</title>
+    <title>AR Quiz Admin v12.0 - Stable Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
@@ -33,7 +33,7 @@
         <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Admin (Firebase System)</h2>
         <div style="display: flex; gap: 10px;">
             <input type="text" id="proj-name" placeholder="ระบุชื่อชุดข้อสอบ">
-            <input type="number" id="q-count" placeholder="จำนวนข้อ (ต้อง > 0)" min="1">
+            <input type="number" id="q-count" placeholder="จำนวนข้อสอบ" min="1">
             <button class="btn btn-blue" onclick="initQuiz()">🚀 สร้างช่องกรอก</button>
         </div>
     </div>
@@ -42,12 +42,12 @@
 </div>
 
 <script>
-    // 🚩 1. เชื่อมต่อ Firebase Config ของคุณครู
+    // 🚩 1. Firebase Config (อ้างอิงจากรูปที่ 1 ของคุณครู)
     const firebaseConfig = {
         apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
         authDomain: "ar-quizz.firebaseapp.com",
         projectId: "ar-quizz",
-        databaseURL: "https://ar-quizz-default-rtdb.firebaseio.com",
+        databaseURL: "https://ar-quizz-default-rtdb.asia-southeast1.firebasedatabase.app",
         storageBucket: "ar-quizz.firebasestorage.app",
         messagingSenderId: "151328581741",
         appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
@@ -57,17 +57,14 @@
     const db = firebase.database();
     const storage = firebase.storage();
 
-    // 🛠️ 2. ฟังก์ชันสร้างช่องกรอก (แก้ไขอาการหาฟังก์ชันไม่เจอ)
+    // 🛠️ 2. ฟังก์ชันสร้างช่องกรอก (แก้ไขอาการ ReferenceError และตรวจสอบค่า < 1)
     window.initQuiz = function() {
         const countInput = document.getElementById('q-count');
         const n = parseInt(countInput.value);
         const area = document.getElementById('quiz-area');
 
-        // ✅ ตรวจสอบเงื่อนไข: ห้าม 0, ติดลบ หรือค่าว่าง
         if (isNaN(n) || n <= 0) {
-            alert("⚠️ คุณครูต้องระบุจำนวนข้อสอบอย่างน้อย 1 ข้อขึ้นไปครับ");
-            countInput.value = "";
-            countInput.focus();
+            alert("⚠️ คุณครูต้องระบุจำนวนข้อสอบตั้งแต่ 1 ข้อขึ้นไปครับ");
             return;
         }
 
@@ -78,25 +75,25 @@
                     <div>
                         <h3 style="color:var(--p)">ข้อที่ ${i+1}</h3>
                         <textarea id="q-${i}" placeholder="พิมพ์โจทย์คำถาม..."></textarea>
-                        <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง) แยกด้วยคอมม่า">
-                        <input type="text" id="a-${i}" placeholder="ระบุคำตอบที่ถูก">
+                        <input type="text" id="o-${i}" placeholder="ตัวเลือก (แยกด้วยคอมม่า)">
+                        <input type="text" id="a-${i}" placeholder="คำตอบที่ถูก">
                         <div class="upload-section">
                             <label style="font-weight:600;">📁 อัปโหลดไฟล์ .glb</label>
                             <input type="file" id="f-${i}" accept=".glb" onchange="uploadToFirebase(${i})">
                             <input type="hidden" id="m-${i}">
-                            <div id="status-${i}" style="font-size:12px; color:gray; margin-top:5px;">รอการอัปโหลด...</div>
+                            <div id="status-${i}" style="font-size:12px; color:gray; margin-top:5px;">ยังไม่อัปโหลด...</div>
                         </div>
                     </div>
                     <div class="preview">
-                        <div class="loader" id="ld-${i}"><div class="spinner"></div><span>กำลังอัปโหลด...</span></div>
-                        <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
+                        <div class="loader" id="ld-${i}"><div class="spinner"></div><span>กำลังส่งไฟล์...</span></div>
+                        <model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer>
                     </div>
                 </div>`;
         }
         document.getElementById('save-btn').style.display = 'block';
     };
 
-    // 🚀 3. ฟังก์ชันอัปโหลดไฟล์
+    // 🚀 3. ฟังก์ชันอัปโหลด (แก้ไข CORS ด้วยเทคนิค Direct Download)
     window.uploadToFirebase = async function(i) {
         const file = document.getElementById(`f-${i}`).files[0];
         if(!file) return;
@@ -106,11 +103,12 @@
         const viewer = document.getElementById(`v-${i}`);
 
         loader.style.display = 'flex';
-        status.innerText = "⏳ กำลังส่งไฟล์...";
+        status.innerText = "⏳ กำลังส่งไฟล์เข้าคลาวด์...";
 
         const storageRef = storage.ref('ar_models/' + Date.now() + "_" + file.name);
         try {
             const snapshot = await storageRef.put(file);
+            // ✨ สร้างลิงก์แบบ Public ทันทีเพื่อเลี่ยง CORS
             const bucket = firebaseConfig.storageBucket;
             const fullPath = encodeURIComponent(snapshot.metadata.fullPath);
             const directLink = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${fullPath}?alt=media`;
@@ -120,28 +118,26 @@
 
             viewer.addEventListener('load', () => {
                 loader.style.display = 'none';
-                status.innerText = "✅ พร้อมใช้งาน";
+                status.innerText = "✅ อัปโหลดและแสดงผลสำเร็จ";
                 status.style.color = "green";
             });
         } catch (e) {
             console.error(e);
-            alert("❌ อัปโหลดไม่สำเร็จ! ตรวจสอบสิทธิ์ในหน้า Storage Rules");
+            alert("❌ อัปโหลดไม่สำเร็จ! ตรวจสอบ Storage Rules ใน Firebase");
             loader.style.display = 'none';
         }
     };
 
-    // 💾 4. ฟังก์ชันบันทึกข้อมูล
+    // 💾 4. บันทึกลง Database
     window.saveAll = async function() {
         const name = document.getElementById('proj-name').value;
         const n = parseInt(document.getElementById('q-count').value);
-        
-        if(!name) return alert("โปรดระบุชื่อชุดข้อสอบ");
+        if(!name) return alert("โปรดใส่ชื่อชุดข้อสอบ");
 
         const questions = [];
         for(let i=0; i<n; i++) {
             const mLink = document.getElementById(`m-${i}`).value;
-            if(!mLink) return alert(`⚠️ กรุณาอัปโหลดโมเดลข้อที่ ${i+1} ให้เรียบร้อยก่อนบันทึกครับ`);
-            
+            if(!mLink) return alert(`กรุณาอัปโหลดโมเดลข้อที่ ${i+1}`);
             questions.push({
                 q: document.getElementById(`q-${i}`).value,
                 o: document.getElementById(`o-${i}`).value.split(','),
@@ -152,7 +148,7 @@
 
         try {
             await db.ref('quizzes').push({ name: name, questions: questions });
-            alert("✅ บันทึกสำเร็จ! ชุดข้อสอบออนไลน์แล้วครับคุณครู");
+            alert("✅ บันทึกสำเร็จ! ข้อมูลวิ่งเข้า Firebase เรียบร้อยครับ");
             location.reload();
         } catch (e) { alert("❌ บันทึกล้มเหลว"); }
     };
