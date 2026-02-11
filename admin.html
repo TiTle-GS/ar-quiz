@@ -2,38 +2,51 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>AR Admin (Drive + Firebase Mode)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คลังข้อสอบ AR - สำหรับนักเรียน</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background: #f0f7ff; padding: 20px; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
-        .btn-blue { background: #039be5; color: white; }
-        .btn-save { background: #4caf50; color: white; width: 100%; margin-top: 20px; font-size: 1.1rem; }
-        .preview { background: #000; height: 250px; border-radius: 10px; margin-top: 10px; display: flex; align-items: center; justify-content: center; }
+        body { font-family: 'Sarabun', sans-serif; background: #f0f7ff; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .quiz-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; transition: 0.3s; }
+        .quiz-item { background: #fff; border: 2px solid #039be5; padding: 15px; border-radius: 15px; margin-bottom: 10px; cursor: pointer; font-weight: 600; color: #039be5; }
+        .quiz-item:hover { background: #039be5; color: white; }
+        #viewer-container { width: 100%; height: 300px; background: #000; border-radius: 15px; margin-bottom: 20px; }
+        .choice-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #039be5; border-radius: 12px; background: white; cursor: pointer; font-size: 16px; }
+        .choice-btn:hover { background: #e3f2fd; }
+        #status { color: #666; font-size: 14px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <h2>🪄 AR Admin (Drive + Firebase)</h2>
-        <p style="color:red; font-size:12px;">*วิธีนี้ไม่ต้องจ่ายเงิน ใช้ Google Drive เก็บไฟล์โมเดล</p>
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="proj-name" placeholder="ชื่อชุดข้อสอบ">
-            <input type="number" id="q-count" placeholder="จำนวนข้อ" min="1">
-            <button class="btn btn-blue" onclick="initQuiz()">🚀 สร้าง</button>
+    <h1 style="color: #039be5;">🌟 คลังข้อสอบ AR</h1>
+    
+    <div id="quiz-selection">
+        <div class="quiz-card">
+            <h3>เลือกชุดข้อสอบเพื่อเริ่มทำ</h3>
+            <div id="quiz-list">กำลังโหลดคลังข้อสอบ...</div>
+            <div id="status"></div>
         </div>
     </div>
-    <div id="quiz-area"></div>
-    <button id="save-btn" class="btn btn-save" style="display:none;" onclick="saveData()">💾 บันทึกชุดข้อสอบลง Firebase</button>
+
+    <div id="quiz-play" style="display:none;">
+        <div class="quiz-card">
+            <div id="viewer-container">
+                <model-viewer id="main-v" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
+            </div>
+            <h2 id="question-text">คำถามจะปรากฏที่นี่</h2>
+            <div id="choices-area"></div>
+            <p id="progress" style="color: #666;"></p>
+        </div>
+    </div>
 </div>
 
 <script>
+    // 🚩 แก้ไข Config ให้เป็นเซิร์ฟเวอร์สิงคโปร์ตามรูปที่ 18
     const firebaseConfig = {
         apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
         authDomain: "ar-quizz.firebaseapp.com",
@@ -47,52 +60,74 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    window.initQuiz = function() {
-        const n = parseInt(document.getElementById('q-count').value);
-        if (isNaN(n) || n <= 0) return alert("โปรดระบุจำนวนข้อตั้งแต่ 1 ขึ้นไป");
+    // 🔍 ฟังก์ชันดึงคลังข้อสอบจาก Firebase
+    const quizListArea = document.getElementById('quiz-list');
+    const statusText = document.getElementById('status');
+
+    db.ref('quizzes').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            quizListArea.innerHTML = "❌ ยังไม่มีข้อสอบในคลัง";
+            statusText.innerText = "ตรวจสอบหน้า Admin ว่าบันทึกข้อมูลสำเร็จหรือไม่";
+            return;
+        }
+
+        quizListArea.innerHTML = ''; // ล้างค่า Loading
+        for (let id in data) {
+            const item = document.createElement('div');
+            item.className = 'quiz-item';
+            item.innerText = data[id].name;
+            item.onclick = () => startQuiz(data[id].questions);
+            quizListArea.appendChild(item);
+        }
+        statusText.innerText = "โหลดข้อมูลจาก Firebase สำเร็จ (Singapore Server)";
+    }, (error) => {
+        quizListArea.innerHTML = "❌ เกิดข้อผิดพลาดในการเชื่อมต่อ";
+        console.error(error);
+    });
+
+    // 🎮 ระบบทำข้อสอบ
+    let currentQuestions = [];
+    let currentIndex = 0;
+
+    function startQuiz(questions) {
+        currentQuestions = questions;
+        currentIndex = 0;
+        document.getElementById('quiz-selection').style.display = 'none';
+        document.getElementById('quiz-play').style.display = 'block';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentIndex >= currentQuestions.length) {
+            alert("🎉 เก่งมากครับ! ทำข้อสอบครบทุกข้อแล้ว");
+            location.reload();
+            return;
+        }
+
+        const q = currentQuestions[currentIndex];
+        document.getElementById('question-text').innerText = q.q;
+        document.getElementById('main-v').src = q.m;
+        document.getElementById('progress').innerText = `ข้อที่ ${currentIndex + 1} / ${currentQuestions.length}`;
         
-        const area = document.getElementById('quiz-area');
+        const area = document.getElementById('choices-area');
         area.innerHTML = '';
-        for(let i=0; i<n; i++) {
-            area.innerHTML += `
-                <div class="card">
-                    <h3>ข้อที่ ${i+1}</h3>
-                    <textarea id="q-${i}" placeholder="โจทย์คำถาม"></textarea>
-                    <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง)">
-                    <input type="text" id="a-${i}" placeholder="คำตอบที่ถูก">
-                    <input type="text" id="m-${i}" placeholder="วางลิงก์ Google Drive จากปุ่ม Share" oninput="checkModel(${i}, this.value)">
-                    <div class="preview"><model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer></div>
-                </div>`;
-        }
-        document.getElementById('save-btn').style.display = 'block';
-    }
-
-    window.checkModel = function(i, url) {
-        if(url.includes("drive.google.com")) {
-            try {
-                const fileId = url.split('/d/')[1].split('/')[0];
-                const directLink = `https://drive.google.com/uc?id=${fileId}`;
-                document.getElementById(`v-${i}`).src = directLink;
-                document.getElementById(`m-${i}`).dataset.realUrl = directLink;
-            } catch(e) { console.log("URL Error"); }
-        }
-    }
-
-    window.saveData = async function() {
-        const name = document.getElementById('proj-name').value;
-        const n = parseInt(document.getElementById('q-count').value);
-        const questions = [];
-        for(let i=0; i<n; i++) {
-            questions.push({
-                q: document.getElementById(`q-${i}`).value,
-                o: document.getElementById(`o-${i}`).value.split(','),
-                a: document.getElementById(`a-${i}`).value,
-                m: document.getElementById(`m-${i}`).dataset.realUrl || document.getElementById(`m-${i}`).value
-            });
-        }
-        await db.ref('quizzes').push({ name: name, questions: questions });
-        alert("✅ บันทึกสำเร็จ! ข้อมูลไปโผล่ใน Firebase แล้วครับ");
-        location.reload();
+        
+        q.o.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = opt.trim();
+            btn.onclick = () => {
+                if (opt.trim() === q.a.trim()) {
+                    alert("✅ ถูกต้องครับ!");
+                    currentIndex++;
+                    showQuestion();
+                } else {
+                    alert("❌ ยังไม่ถูก ลองใหม่อีกครั้งนะครับ");
+                }
+            };
+            area.appendChild(btn);
+        });
     }
 </script>
 </body>
