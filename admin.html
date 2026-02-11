@@ -91,7 +91,12 @@
         const storageRef = storage.ref('ar_models/' + Date.now() + "_" + file.name);
         try {
             const snapshot = await storageRef.put(file);
-            const url = await snapshot.ref.getDownloadURL();
+            const fileId = snapshot.metadata.fullPath.split('/').pop();
+// สร้างลิงก์แบบ Public ที่ไม่ติด CORS
+const url = `https://firebasestorage.googleapis.com/v0/b/ar-quizz.firebasestorage.app/o/ar_models%2F${fileId}?alt=media`;
+
+document.getElementById(`m-${i}`).value = url;
+document.getElementById(`v-${i}`).src = url; = await snapshot.ref.getDownloadURL();
             
             document.getElementById(`m-${i}`).value = url;
             document.getElementById(`v-${i}`).src = url;
