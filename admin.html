@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Admin v11.0 - Firebase Native 100%</title>
+    <title>AR Admin v12.0 - Firebase High Stability</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --p: #0288d1; --g: #2e7d32; --bg: #f8fafc; }
+        :root { --p: #0288d1; --g: #2e7d32; --bg: #f1f5f9; }
         body { font-family: 'Sarabun', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
         .container { max-width: 900px; margin: 0 auto; }
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
         .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; font-family: 'Sarabun'; transition: 0.2s; }
         .btn-blue { background: var(--p); color: white; }
         .btn-save { background: var(--g); color: white; width: 100%; font-size: 1.2rem; margin-top: 20px; }
@@ -22,16 +22,18 @@
         input, textarea { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; }
         .upload-section { margin-top: 15px; background: #fff8e1; padding: 15px; border-radius: 12px; border: 2px dashed #ffb300; }
         .loader { display: none; flex-direction: column; align-items: center; gap: 10px; color: white; z-index: 10; position: absolute; }
+        .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--p); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2 style="color:var(--p); margin-top:0;">🪄 AR Admin (Firebase Native)</h2>
+        <h2 style="color:var(--p); margin-top:0;">🪄 AR Quiz Admin (Firebase System)</h2>
         <div style="display: flex; gap: 10px;">
             <input type="text" id="proj-name" placeholder="ระบุชื่อชุดข้อสอบ">
-            <input type="number" id="q-count" placeholder="จำนวนข้อ" style="width:100px;">
+            <input type="number" id="q-count" placeholder="จำนวนข้อ (ต้อง > 0)" min="1">
             <button class="btn btn-blue" onclick="initQuiz()">🚀 สร้างช่องกรอก</button>
         </div>
     </div>
@@ -40,7 +42,7 @@
 </div>
 
 <script>
-    // 🚩 รหัสของคุณครู (ตรวจสอบความถูกต้องเรียบร้อยแล้ว)
+    // 🚩 1. เชื่อมต่อ Firebase Config ของคุณครู
     const firebaseConfig = {
         apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
         authDomain: "ar-quizz.firebaseapp.com",
@@ -51,17 +53,24 @@
         appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
 
-    // 🛠️ ฟังก์ชันสร้างช่องกรอกข้อมูล (แก้อาการ ReferenceError)
+    // 🛠️ 2. ฟังก์ชันสร้างช่องกรอก (แก้ไขอาการหาฟังก์ชันไม่เจอ)
     window.initQuiz = function() {
-        const n = document.getElementById('q-count').value;
+        const countInput = document.getElementById('q-count');
+        const n = parseInt(countInput.value);
         const area = document.getElementById('quiz-area');
-        if(!n || n <= 0) return alert("โปรดใส่จำนวนข้อ");
-        
+
+        // ✅ ตรวจสอบเงื่อนไข: ห้าม 0, ติดลบ หรือค่าว่าง
+        if (isNaN(n) || n <= 0) {
+            alert("⚠️ คุณครูต้องระบุจำนวนข้อสอบอย่างน้อย 1 ข้อขึ้นไปครับ");
+            countInput.value = "";
+            countInput.focus();
+            return;
+        }
+
         area.innerHTML = '';
         for(let i=0; i<n; i++) {
             area.innerHTML += `
@@ -79,7 +88,7 @@
                         </div>
                     </div>
                     <div class="preview">
-                        <div class="loader" id="ld-${i}"><span>⏳ กำลังอัปโหลด...</span></div>
+                        <div class="loader" id="ld-${i}"><div class="spinner"></div><span>กำลังอัปโหลด...</span></div>
                         <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
                     </div>
                 </div>`;
@@ -87,7 +96,7 @@
         document.getElementById('save-btn').style.display = 'block';
     };
 
-    // 🚀 ฟังก์ชันอัปโหลด (แก้ปัญหา CORS ด้วยเทคนิค alt=media)
+    // 🚀 3. ฟังก์ชันอัปโหลดไฟล์
     window.uploadToFirebase = async function(i) {
         const file = document.getElementById(`f-${i}`).files[0];
         if(!file) return;
@@ -102,7 +111,6 @@
         const storageRef = storage.ref('ar_models/' + Date.now() + "_" + file.name);
         try {
             const snapshot = await storageRef.put(file);
-            // ✨ เทคนิคการสร้าง Direct Link เพื่อทะลุด่าน CORS
             const bucket = firebaseConfig.storageBucket;
             const fullPath = encodeURIComponent(snapshot.metadata.fullPath);
             const directLink = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${fullPath}?alt=media`;
@@ -117,21 +125,23 @@
             });
         } catch (e) {
             console.error(e);
-            alert("อัปโหลดไม่สำเร็จ! ตรวจสอบ Rules ใน Storage ของคุณครู");
+            alert("❌ อัปโหลดไม่สำเร็จ! ตรวจสอบสิทธิ์ในหน้า Storage Rules");
             loader.style.display = 'none';
         }
     };
 
-    // 💾 บันทึกลง Database
+    // 💾 4. ฟังก์ชันบันทึกข้อมูล
     window.saveAll = async function() {
         const name = document.getElementById('proj-name').value;
-        const count = document.getElementById('q-count').value;
+        const n = parseInt(document.getElementById('q-count').value);
+        
         if(!name) return alert("โปรดระบุชื่อชุดข้อสอบ");
 
         const questions = [];
-        for(let i=0; i<count; i++) {
+        for(let i=0; i<n; i++) {
             const mLink = document.getElementById(`m-${i}`).value;
-            if(!mLink) return alert(`กรุณาอัปโหลดโมเดลข้อที่ ${i+1}`);
+            if(!mLink) return alert(`⚠️ กรุณาอัปโหลดโมเดลข้อที่ ${i+1} ให้เรียบร้อยก่อนบันทึกครับ`);
+            
             questions.push({
                 q: document.getElementById(`q-${i}`).value,
                 o: document.getElementById(`o-${i}`).value.split(','),
@@ -142,9 +152,9 @@
 
         try {
             await db.ref('quizzes').push({ name: name, questions: questions });
-            alert("บันทึกสำเร็จ! ข้อมูลออนไลน์แล้วครับ");
+            alert("✅ บันทึกสำเร็จ! ชุดข้อสอบออนไลน์แล้วครับคุณครู");
             location.reload();
-        } catch (e) { alert("บันทึกล้มเหลว"); }
+        } catch (e) { alert("❌ บันทึกล้มเหลว"); }
     };
 </script>
 </body>
