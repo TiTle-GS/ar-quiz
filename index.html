@@ -1,333 +1,130 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AR Quiz — Student</title>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; background:#f6f7fb; color:#222; }
-    .container { max-width: 980px; margin: 24px auto; padding: 18px; background: #fff; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
-    .row { display:flex; gap:12px; align-items:center; }
-    .col { flex:1; }
-    #lobby, #quiz-screen, #result-screen { display:block; }
-    .hidden { display:none; }
-    #ar-wrap { width:100%; height:360px; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-    model-viewer { width:100%; height:100%; background:#000; }
-    .option-btn { padding:12px 14px; margin:8px 0; border-radius:6px; background:#f1f5fb; cursor:pointer; border:1px solid #e1e6f2; user-select:none; }
-    .option-btn.selected { background:#dfefff; border-color:#9fc3ff; }
-    #next-btn { margin-top:12px; padding:10px 14px; background:#2b7cff; color:#fff; border-radius:6px; cursor:pointer; display:inline-block; border:none; }
-    #pbar { height:10px; background:#e6eefc; border-radius:6px; overflow:hidden; margin-top:12px; }
-    #p-bar { height:100%; width:0%; background:linear-gradient(90deg,#4f9bff,#2b7cff); transition:width .3s ease; }
-    .stat { display:inline-block; margin-right:12px; }
-    #ai-feedback { white-space:pre-wrap; background:#fbfdff; padding:12px; border-radius:6px; border:1px solid #eef5ff; }
-    .badge { display:inline-block; padding:6px 8px; background:#eef6ff; border-radius:6px; margin-left:8px; }
-    input, button { font-size:14px; }
-  </style>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Quiz Online - สำหรับนักเรียน</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --main-color: #0288d1; --bg-color: #f0f4f8; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg-color); margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+        .quiz-item { background: #fff; border: 2px solid var(--main-color); padding: 15px; border-radius: 15px; margin-bottom: 12px; cursor: pointer; font-weight: 600; color: var(--main-color); transition: 0.3s; }
+        .quiz-item:hover { background: var(--main-color); color: white; transform: translateY(-2px); }
+        #viewer-container { width: 100%; height: 350px; background: radial-gradient(#444, #000); border-radius: 15px; margin-bottom: 20px; position: relative; }
+        .choice-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #e0e0e0; border-radius: 12px; background: white; cursor: pointer; font-size: 17px; font-family: 'Sarabun'; transition: 0.2s; }
+        .choice-btn:hover { border-color: var(--main-color); background: #e3f2fd; }
+        .score-badge { display: inline-block; padding: 5px 15px; background: #e1f5fe; color: var(--main-color); border-radius: 20px; font-weight: 600; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>AR Quiz — Student</h2>
 
-    <!-- Lobby -->
-    <div id="lobby">
-      <div style="margin-bottom:12px;">
-        <label>ชื่อ-นามสกุล</label><br />
-        <input id="std-name" style="width:100%; padding:8px; margin-top:6px;" placeholder="เช่น สมชาย ใจดี" />
-      </div>
-      <div style="margin-bottom:12px;">
-        <label>รหัสข้อสอบ</label><br />
-        <input id="quiz-id" style="width:100%; padding:8px; margin-top:6px;" placeholder="เช่น AR-A1B2C3" />
-      </div>
-      <div style="text-align:right;">
-        <button id="start-btn" style="padding:10px 14px; background:#2b7cff; color:#fff; border-radius:6px; border:none; cursor:pointer;">🚀 เริ่มการทดสอบ</button>
-      </div>
-    </div>
-
-    <!-- Quiz Screen -->
-    <div id="quiz-screen" class="hidden">
-      <div class="row" style="align-items:flex-start;">
-        <div class="col" style="min-width:360px;">
-          <div id="ar-wrap">
-            <model-viewer id="ar-view" src="" alt="AR Model" camera-controls touch-action="pan-y" exposure="1" ar ar-modes="webxr scene-viewer quick-look" style="width:100%; height:100%;"></model-viewer>
-          </div>
-          <div style="margin-top:8px;">
-            <span id="timer">⏱️ 0.0 วินาที</span>
-            <span id="ar-badge" class="badge">ปฏิสัมพันธ์: 0 ครั้ง</span>
-            <span id="q-number" style="float:right; font-weight:600;"></span>
-          </div>
+<div class="container">
+    <div id="setup-page">
+        <div class="card">
+            <h1 style="color: var(--main-color); margin-top:0;">🌟 AR Learning Quiz</h1>
+            <p>กรุณาเลือกชุดข้อสอบที่คุณครูกำหนด</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <div id="quiz-list">กำลังเชื่อมต่อคลังข้อสอบ...</div>
         </div>
+    </div>
 
-        <div class="col" style="flex:0.9;">
-          <div style="margin-bottom:8px;">
-            <div id="q-text" style="font-size:18px; font-weight:600;"></div>
-            <div id="pbar"><div id="p-bar"></div></div>
-          </div>
-
-          <div id="options-area" style="margin-top:12px;"></div>
-
-          <div style="margin-top:12px;">
-            <button id="next-btn" style="display:none;">ส่งคำตอบ / ข้อต่อไป</button>
-          </div>
+    <div id="quiz-page" style="display:none;">
+        <div class="card">
+            <div class="score-badge" id="progress-text">ข้อที่ 1/1</div>
+            <div id="viewer-container">
+                <model-viewer id="ar-viewer" camera-controls ar shadow-intensity="1" auto-rotate style="width:100%; height:100%;"></model-viewer>
+            </div>
+            <h2 id="question-text" style="margin: 15px 0;">โจทย์คำถามกำลังโหลด...</h2>
+            <div id="options-area"></div>
         </div>
-      </div>
     </div>
+</div>
 
-    <!-- Result Screen -->
-    <div id="result-screen" class="hidden">
-      <h3>ผลการทดสอบ</h3>
-      <div style="margin-bottom:8px;">
-        <strong>คะแนน:</strong> <span id="final-score"></span>
-      </div>
-      <div style="margin-bottom:8px;">
-        <strong>รวมเวลา (วินาที):</strong> <span id="stat-time"></span>
-        &nbsp;&nbsp;
-        <strong>AR Interactions:</strong> <span id="stat-ar"></span>
-        &nbsp;&nbsp;
-        <strong>Answer Changes:</strong> <span id="stat-changes"></span>
-      </div>
+<script>
+    // 🚩 Config เชื่อมต่อกับ Firebase สิงคโปร์ (ตามข้อมูลของคุณครู)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
+        authDomain: "ar-quizz.firebaseapp.com",
+        projectId: "ar-quizz",
+        databaseURL: "https://ar-quizz-default-rtdb.asia-southeast1.firebasedatabase.app",
+        storageBucket: "ar-quizz.firebasestorage.app",
+        messagingSenderId: "151328581741",
+        appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
+    };
 
-      <div style="margin-top:12px;">
-        <strong>ประเภทผู้เรียน:</strong> <span id="stat-type"></span>
-      </div>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-      <div style="margin-top:12px;">
-        <div id="ai-feedback"></div>
-      </div>
-    </div>
-  </div>
+    // --- 1. ระบบดึงคลังข้อสอบ ---
+    const quizListArea = document.getElementById('quiz-list');
 
-  <script>
-    // -------------------------
-    // Configuration
-    // -------------------------
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxmffRx9fH5-XI9aaUfepGWIMSreXKMSS3KsAl9d-0BF3qdEsFeQwg_WjSy4-Jsfe2E4Q/exec'; // <-- เปลี่ยนเป็น Web App URL ของคุณ
-
-    // -------------------------
-    // State
-    // -------------------------
-    let quizData = null;
-    let currentIdx = 0;
-    let score = 0;
-    let logs = [];
-
-    let qStartTime = 0;
-    let timerInterval = null;
-    let currentLog = null;
-    let previousAnswer = null;
-    let globalSequence = 0;
-
-    // AR tracking globals
-    let arViewStartTime = null;
-    const viewer = document.getElementById('ar-view');
-
-    // -------------------------
-    // Utility
-    // -------------------------
-    function $(id) { return document.getElementById(id); }
-
-    // -------------------------
-    // AR listeners (bind once)
-    // -------------------------
-    function onCameraChange() {
-      if (!currentLog) return;
-      currentLog.arInteractions = (currentLog.arInteractions || 0) + 1;
-      $('ar-badge').innerText = `ปฏิสัมพันธ์: ${currentLog.arInteractions} ครั้ง`;
-    }
-    function onPointerEnter() { arViewStartTime = Date.now(); }
-    function onPointerLeave() {
-      if (arViewStartTime && currentLog) {
-        currentLog.arViewTime = (currentLog.arViewTime || 0) + (Date.now() - arViewStartTime) / 1000;
-        arViewStartTime = null;
-      }
-    }
-
-    if (viewer) {
-      viewer.addEventListener('camera-change', onCameraChange);
-      viewer.addEventListener('pointerenter', onPointerEnter);
-      viewer.addEventListener('pointerleave', onPointerLeave);
-      viewer.addEventListener('touchstart', () => { onPointerEnter(); onCameraChange(); }, {passive:true});
-      viewer.addEventListener('touchend', onPointerLeave, {passive:true});
-    }
-
-    // -------------------------
-    // Timer
-    // -------------------------
-    function updateTimer() {
-      if (!qStartTime) return;
-      const currentQuestionTime = ((Date.now() - qStartTime) / 1000).toFixed(1);
-      $('timer').innerText = `⏱️ ${currentQuestionTime} วินาที`;
-    }
-
-    // -------------------------
-    // Start exam
-    // -------------------------
-    $('start-btn').addEventListener('click', startExam);
-
-    async function startExam() {
-      const name = $('std-name').value.trim();
-      const id = $('quiz-id').value.trim();
-      if (!name || !id) return alert("กรุณากรอกชื่อและรหัสข้อสอบ");
-
-      try {
-        const res = await fetch(`${SCRIPT_URL}?action=getQuiz&id=${encodeURIComponent(id)}&t=${Date.now()}`);
-        const data = await res.json();
-        if (data.error) throw new Error(data.error || 'Quiz not found');
-        quizData = data;
-        currentIdx = 0;
-        score = 0;
-        logs = [];
-        globalSequence = 0;
-
-        $('lobby').classList.add('hidden');
-        $('quiz-screen').classList.remove('hidden');
-        loadQuestion();
-      } catch (err) {
-        console.error(err);
-        alert("ไม่พบชุดข้อสอบ กรุณาตรวจสอบรหัส");
-      }
-    }
-
-    // -------------------------
-    // Load question
-    // -------------------------
-    function loadQuestion() {
-      const q = quizData.questions[currentIdx];
-      $('q-text').innerText = q.q || '';
-      $('q-number').innerText = `ข้อ ${currentIdx + 1}/${quizData.questions.length}`;
-
-      try {
-        viewer.setAttribute('src', q.m || '');
-        if (typeof viewer.load === 'function') viewer.load();
-      } catch (e) {
-        console.warn('model-viewer set src failed', e);
-      }
-
-      const optArea = $('options-area');
-      optArea.innerHTML = '';
-      (q.o || []).forEach(opt => {
-        const btn = document.createElement('div');
-        btn.className = 'option-btn';
-        btn.innerText = opt;
-        btn.addEventListener('click', () => selectOption(btn, opt));
-        optArea.appendChild(btn);
-      });
-
-      globalSequence++;
-      qStartTime = Date.now();
-      previousAnswer = null;
-      currentLog = {
-        questionIndex: currentIdx,
-        timeSpent: 0,
-        arViewTime: 0,
-        arInteractions: 0,
-        answerChanges: 0,
-        selectedAnswer: null,
-        isCorrect: false,
-        sequenceOrder: globalSequence
-      };
-      $('ar-badge').innerText = `ปฏิสัมพันธ์: 0 ครั้ง`;
-      $('next-btn').style.display = 'none';
-
-      const progress = ((currentIdx + 1) / quizData.questions.length) * 100;
-      $('p-bar').style.width = `${progress}%`;
-
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(updateTimer, 100);
-      updateTimer();
-    }
-
-    // -------------------------
-    // Option select
-    // -------------------------
-    function selectOption(el, val) {
-      document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-      el.classList.add('selected');
-
-      if (previousAnswer !== null && previousAnswer !== val) {
-        currentLog.answerChanges = (currentLog.answerChanges || 0) + 1;
-      }
-      previousAnswer = val;
-      currentLog.selectedAnswer = val;
-      $('next-btn').style.display = 'inline-block';
-    }
-
-    // -------------------------
-    // Submit answer / next
-    // -------------------------
-    $('next-btn').addEventListener('click', submitAnswer);
-
-    function submitAnswer() {
-      if (!currentLog || !currentLog.selectedAnswer) return alert("กรุณาเลือกคำตอบก่อน");
-      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-
-      currentLog.timeSpent = (Date.now() - qStartTime) / 1000;
-      const q = quizData.questions[currentIdx];
-      currentLog.isCorrect = (String(currentLog.selectedAnswer).trim() === String(q.a).trim());
-      if (currentLog.isCorrect) score++;
-
-      logs.push(JSON.parse(JSON.stringify(currentLog)));
-
-      if (currentIdx < quizData.questions.length - 1) {
-        currentIdx++;
-        loadQuestion();
-      } else {
-        finishExam();
-      }
-    }
-
-    // -------------------------
-    // Finish and send analytics
-    // -------------------------
-    async function finishExam() {
-      $('quiz-screen').classList.add('hidden');
-      $('result-screen').classList.remove('hidden');
-
-      const totalTime = logs.reduce((s, l) => s + (l.timeSpent || 0), 0);
-      const totalArInteractions = logs.reduce((s, l) => s + (l.arInteractions || 0), 0);
-      const totalChanges = logs.reduce((s, l) => s + (l.answerChanges || 0), 0);
-
-      $('final-score').innerText = `${score}/${quizData.questions.length}`;
-      $('stat-time').innerText = totalTime.toFixed(1);
-      $('stat-ar').innerText = totalArInteractions;
-      $('stat-changes').innerText = totalChanges;
-
-      const payload = {
-        type: "SUBMIT_ANALYTICS",
-        studentName: $('std-name').value.trim(),
-        quizId: $('quiz-id').value.trim(),
-        score: `${score}/${quizData.questions.length}`,
-        logs: logs
-      };
-
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        if (result && result.analysis) {
-          $('ai-feedback').innerText = result.analysis.summary || '';
-          $('stat-type').innerText = result.analysis.learnerType || '';
-        } else {
-          $('ai-feedback').innerText = 'ได้รับผลลัพธ์จากเซิร์ฟเวอร์ แต่ไม่มีการวิเคราะห์';
+    db.ref('quizzes').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            quizListArea.innerHTML = "<p style='color:red;'>ขณะนี้ยังไม่มีข้อสอบในระบบ</p>";
+            return;
         }
-      } catch (err) {
-        console.error(err);
-        $('ai-feedback').innerText = 'ไม่สามารถส่งข้อมูลไปยังเซิร์ฟเวอร์ได้';
-      }
+
+        quizListArea.innerHTML = ''; // ล้าง Loading
+        for (let key in data) {
+            const div = document.createElement('div');
+            div.className = 'quiz-item';
+            div.innerHTML = `📝 ${data[key].name}`;
+            div.onclick = () => startQuiz(data[key].questions);
+            quizListArea.appendChild(div);
+        }
+    });
+
+    // --- 2. ระบบจัดการการเล่น ---
+    let questions = [];
+    let currentIdx = 0;
+
+    function startQuiz(quizData) {
+        questions = quizData;
+        currentIdx = 0;
+        document.getElementById('setup-page').style.display = 'none';
+        document.getElementById('quiz-page').style.display = 'block';
+        loadQuestion();
     }
 
-    // -------------------------
-    // Warn on leave
-    // -------------------------
-    window.addEventListener('beforeunload', function (e) {
-      if (logs.length > 0 && quizData && currentIdx < quizData.questions.length) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
-  </script>
+    function loadQuestion() {
+        if (currentIdx >= questions.length) {
+            alert("🎊 ยินดีด้วย! คุณทำข้อสอบครบทุกข้อแล้ว");
+            location.reload(); // กลับหน้าหลัก
+            return;
+        }
+
+        const q = questions[currentIdx];
+        document.getElementById('progress-text').innerText = `ข้อที่ ${currentIdx + 1} / ${questions.length}`;
+        document.getElementById('question-text').innerText = q.q;
+        document.getElementById('ar-viewer').src = q.m;
+
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = '';
+
+        q.o.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = choice.trim();
+            btn.onclick = () => checkAnswer(choice.trim(), q.a.trim());
+            optionsArea.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(userAns, correctAns) {
+        if (userAns === correctAns) {
+            alert("✅ ถูกต้องจ้า!");
+            currentIdx++;
+            loadQuestion();
+        } else {
+            alert("❌ ยังไม่ถูกนะ ลองพิจารณาโมเดล 3D อีกครั้งครับ");
+        }
+    }
+</script>
 </body>
 </html>
