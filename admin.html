@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Quiz Admin v12.0 - Stable Edition</title>
+    <title>AR Quiz Admin v12.1 - Stable Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
@@ -42,7 +42,7 @@
 </div>
 
 <script>
-    // 🚩 1. Firebase Config (อ้างอิงจากรูปที่ 1 ของคุณครู)
+    // 🚩 1. Firebase Config (ใช้รหัส apiKey ของคุณครูจากรูปที่ 1)
     const firebaseConfig = {
         apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
         authDomain: "ar-quizz.firebaseapp.com",
@@ -86,7 +86,7 @@
                     </div>
                     <div class="preview">
                         <div class="loader" id="ld-${i}"><div class="spinner"></div><span>กำลังส่งไฟล์...</span></div>
-                        <model-viewer id="v-${i}" camera-controls ar style="width:100%; height:100%;"></model-viewer>
+                        <model-viewer id="v-${i}" camera-controls ar shadow-intensity="1" style="width:100%; height:100%;"></model-viewer>
                     </div>
                 </div>`;
         }
