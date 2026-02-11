@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Quiz Online - สำหรับนักเรียน</title>
+    <title>AR Quiz - ระบบสอบออนไลน์</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
@@ -11,42 +11,54 @@
     <style>
         :root { --main-color: #0288d1; --bg-color: #f0f4f8; }
         body { font-family: 'Sarabun', sans-serif; background: var(--bg-color); margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
-        .quiz-item { background: #fff; border: 2px solid var(--main-color); padding: 15px; border-radius: 15px; margin-bottom: 12px; cursor: pointer; font-weight: 600; color: var(--main-color); transition: 0.3s; }
-        .quiz-item:hover { background: var(--main-color); color: white; transform: translateY(-2px); }
-        #viewer-container { width: 100%; height: 350px; background: radial-gradient(#444, #000); border-radius: 15px; margin-bottom: 20px; position: relative; }
-        .choice-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #e0e0e0; border-radius: 12px; background: white; cursor: pointer; font-size: 17px; font-family: 'Sarabun'; transition: 0.2s; }
-        .choice-btn:hover { border-color: var(--main-color); background: #e3f2fd; }
-        .score-badge { display: inline-block; padding: 5px 15px; background: #e1f5fe; color: var(--main-color); border-radius: 20px; font-weight: 600; margin-bottom: 10px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; box-sizing: border-box; font-family: 'Sarabun'; }
+        input:focus { border-color: var(--main-color); outline: none; }
+        .btn-start { background: var(--main-color); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-start:hover { background: #01579b; }
+        #viewer-container { width: 100%; height: 300px; background: #000; border-radius: 15px; margin-bottom: 20px; }
+        .choice-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 12px; background: white; cursor: pointer; font-size: 16px; font-family: 'Sarabun'; }
+        .choice-btn:hover { background: #e3f2fd; border-color: var(--main-color); }
+        .header-info { margin-bottom: 20px; color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="setup-page">
+    <div id="login-page">
         <div class="card">
-            <h1 style="color: var(--main-color); margin-top:0;">🌟 AR Learning Quiz</h1>
-            <p>กรุณาเลือกชุดข้อสอบที่คุณครูกำหนด</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <div id="quiz-list">กำลังเชื่อมต่อคลังข้อสอบ...</div>
+            <h1 style="color: var(--main-color); margin-bottom: 5px;">📝 เข้าสู่ระบบสอบ</h1>
+            <p style="color: #666; margin-bottom: 25px;">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+            
+            <input type="text" id="student-name" placeholder="ชื่อ-นามสกุล ของนักเรียน">
+            <input type="text" id="quiz-id" placeholder="รหัสข้อสอบ (ก๊อปปี้จากคุณครู)">
+            
+            <button class="btn-start" onclick="checkQuiz()">เริ่มทำข้อสอบ</button>
+            <p id="msg" style="color: red; font-size: 14px; margin-top: 15px;"></p>
         </div>
     </div>
 
     <div id="quiz-page" style="display:none;">
         <div class="card">
-            <div class="score-badge" id="progress-text">ข้อที่ 1/1</div>
-            <div id="viewer-container">
-                <model-viewer id="ar-viewer" camera-controls ar shadow-intensity="1" auto-rotate style="width:100%; height:100%;"></model-viewer>
+            <div class="header-info">
+                นักเรียน: <span id="display-name" style="font-weight:600; color:var(--main-color);"></span><br>
+                ชุดข้อสอบ: <span id="display-quiz-name" style="font-weight:600;"></span>
             </div>
-            <h2 id="question-text" style="margin: 15px 0;">โจทย์คำถามกำลังโหลด...</h2>
+            
+            <div id="viewer-container">
+                <model-viewer id="ar-v" camera-controls ar shadow-intensity="1" auto-rotate style="width:100%; height:100%;"></model-viewer>
+            </div>
+
+            <h3 id="q-text">กำลังโหลดโจทย์...</h3>
             <div id="options-area"></div>
+            <p id="progress" style="color: #999; font-size: 13px;"></p>
         </div>
     </div>
 </div>
 
 <script>
-    // 🚩 Config เชื่อมต่อกับ Firebase สิงคโปร์ (ตามข้อมูลของคุณครู)
+    // 🚩 Firebase Config (สิงคโปร์)
     const firebaseConfig = {
         apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
         authDomain: "ar-quizz.firebaseapp.com",
@@ -60,70 +72,68 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- 1. ระบบดึงคลังข้อสอบ ---
-    const quizListArea = document.getElementById('quiz-list');
-
-    db.ref('quizzes').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) {
-            quizListArea.innerHTML = "<p style='color:red;'>ขณะนี้ยังไม่มีข้อสอบในระบบ</p>";
-            return;
-        }
-
-        quizListArea.innerHTML = ''; // ล้าง Loading
-        for (let key in data) {
-            const div = document.createElement('div');
-            div.className = 'quiz-item';
-            div.innerHTML = `📝 ${data[key].name}`;
-            div.onclick = () => startQuiz(data[key].questions);
-            quizListArea.appendChild(div);
-        }
-    });
-
-    // --- 2. ระบบจัดการการเล่น ---
     let questions = [];
     let currentIdx = 0;
+    let studentName = "";
 
-    function startQuiz(quizData) {
-        questions = quizData;
-        currentIdx = 0;
-        document.getElementById('setup-page').style.display = 'none';
-        document.getElementById('quiz-page').style.display = 'block';
-        loadQuestion();
+    // --- ตรวจสอบรหัสข้อสอบ ---
+    window.checkQuiz = function() {
+        studentName = document.getElementById('student-name').value;
+        const qId = document.getElementById('quiz-id').value.trim();
+        const msg = document.getElementById('msg');
+
+        if(!studentName) { msg.innerText = "⚠️ กรุณาพิมพ์ชื่อนักเรียน"; return; }
+        if(!qId) { msg.innerText = "⚠️ กรุณากรอกรหัสข้อสอบ"; return; }
+
+        msg.innerText = "กำลังตรวจสอบรหัส...";
+
+        db.ref('quizzes/' + qId).once('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                questions = data.questions;
+                document.getElementById('display-name').innerText = studentName;
+                document.getElementById('display-quiz-name').innerText = data.name;
+                
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('quiz-page').style.display = 'block';
+                showQuestion();
+            } else {
+                msg.innerText = "❌ ไม่พบรหัสข้อสอบนี้ กรุณาตรวจสอบอีกครั้ง";
+            }
+        });
     }
 
-    function loadQuestion() {
-        if (currentIdx >= questions.length) {
-            alert("🎊 ยินดีด้วย! คุณทำข้อสอบครบทุกข้อแล้ว");
-            location.reload(); // กลับหน้าหลัก
+    // --- ระบบทำข้อสอบ ---
+    function showQuestion() {
+        if(currentIdx >= questions.length) {
+            alert("🎉 เก่งมาก " + studentName + "! ทำข้อสอบเรียบร้อยแล้ว");
+            location.reload();
             return;
         }
 
         const q = questions[currentIdx];
-        document.getElementById('progress-text').innerText = `ข้อที่ ${currentIdx + 1} / ${questions.length}`;
-        document.getElementById('question-text').innerText = q.q;
-        document.getElementById('ar-viewer').src = q.m;
+        document.getElementById('q-text').innerText = q.q;
+        document.getElementById('ar-v').src = q.m;
+        document.getElementById('progress').innerText = `ข้อที่ ${currentIdx + 1} / ${questions.length}`;
 
-        const optionsArea = document.getElementById('options-area');
-        optionsArea.innerHTML = '';
-
-        q.o.forEach(choice => {
+        const area = document.getElementById('options-area');
+        area.innerHTML = '';
+        
+        q.o.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'choice-btn';
-            btn.innerText = choice.trim();
-            btn.onclick = () => checkAnswer(choice.trim(), q.a.trim());
-            optionsArea.appendChild(btn);
+            btn.innerText = opt.trim();
+            btn.onclick = () => {
+                if(opt.trim() === q.a.trim()) {
+                    alert("ถูกต้อง! ✅");
+                    currentIdx++;
+                    showQuestion();
+                } else {
+                    alert("ยังไม่ถูก ลองดูโมเดล 3D อีกทีนะ ❌");
+                }
+            };
+            area.appendChild(btn);
         });
-    }
-
-    function checkAnswer(userAns, correctAns) {
-        if (userAns === correctAns) {
-            alert("✅ ถูกต้องจ้า!");
-            currentIdx++;
-            loadQuestion();
-        } else {
-            alert("❌ ยังไม่ถูกนะ ลองพิจารณาโมเดล 3D อีกครั้งครับ");
-        }
     }
 </script>
 </body>
