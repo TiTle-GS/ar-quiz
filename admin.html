@@ -3,246 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI–AR Sustainable Khon Mask Lab | สานศิลป์ ถิ่นศึกษา</title>
-    
-    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-face-aframe.prod.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Noto+Serif+Thai:wght@300;400;700&display=swap" rel="stylesheet">
-    
+    <title>AR Admin Master - Analysis Mode</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --gold: #C9922A; --gl: #F5C842; --red: #8B1A1A; --blk: #0A0806; --cream: #F7F0E0; --glass: rgba(255, 255, 255, 0.05);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--blk); color: var(--cream); font-family: 'Noto Serif Thai', serif; overflow-x: hidden; line-height: 1.6; }
-
-        /* Navigation */
-        .tnav { position: fixed; top: 0; width: 100%; padding: 1rem 2rem; z-index: 1000; display: flex; justify-content: space-between; align-items: center; background: rgba(10, 8, 6, 0.95); border-bottom: 1px solid rgba(201, 146, 42, 0.2); backdrop-filter: blur(10px); }
-        .n-logo { font-family: 'Cinzel Decorative', cursive; color: var(--gold); font-size: 1.2rem; letter-spacing: 2px; }
-        .n-links { display: flex; gap: 20px; }
-        .n-link { color: var(--gold); text-decoration: none; font-size: 0.85rem; cursor: pointer; transition: 0.3s; }
-        .n-link:hover { color: var(--gl); text-shadow: 0 0 10px var(--gold); }
-
-        /* Page Layout */
-        .page { display: none; min-height: 100vh; padding: 100px 10% 60px; opacity: 0; transition: opacity 0.5s ease; }
-        .page.active { display: block; opacity: 1; }
-
-        /* Typography */
-        h1, h2, h3 { font-family: 'Cinzel Decorative', cursive; color: var(--gold); text-align: center; margin-bottom: 1.5rem; }
-        .sub-t { font-size: 0.9rem; text-align: center; color: var(--gl); margin-bottom: 2rem; letter-spacing: 1px; }
-
-        /* Content Cards & Interactive Images */
-        .card { background: var(--glass); border: 1px solid rgba(201, 146, 42, 0.15); padding: 2rem; border-radius: 15px; transition: 0.4s; backdrop-filter: blur(5px); margin-bottom: 20px; }
-        .img-box { width: 100%; border-radius: 10px; border: 1px solid var(--gold); margin: 20px 0; overflow: hidden; position: relative; }
-        .img-box img { width: 100%; display: block; transition: transform 0.5s; }
-        .img-box:hover img { transform: scale(1.05); }
-
-        /* Detail Body */
-        .detail-container { max-width: 900px; margin: 0 auto; text-align: left; }
-        .detail-body h4 { color: var(--gold); margin: 30px 0 10px; font-size: 1.3rem; border-left: 5px solid var(--gold); padding-left: 15px; }
-        .detail-body p { margin-bottom: 1.5rem; color: rgba(247, 240, 224, 0.9); font-size: 1.1rem; }
-
-        /* Buttons */
-        .btn-gold { padding: 12px 35px; background: linear-gradient(135deg, var(--gold), #8A641A); border: none; color: #000; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; font-family: 'Noto Serif Thai'; display: block; margin: 2rem auto; }
-        .btn-gold:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(201, 146, 42, 0.4); }
-
-        /* Bubble Wall */
-        #bubbleWallOverlay { position: fixed; inset: 0; z-index: 2000; display: none; background: #000; }
-        .bubble { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(201, 146, 42, 0.2)); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        .bubble img { width: 85%; height: 85%; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        :root { --p: #0288d1; --s: #2e7d32; --bg: #f8fafc; --edit: #ff9800; --copy: #673ab7; --export: #607d8b; }
+        body { font-family: 'Sarabun', sans-serif; background: var(--bg); padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .quiz-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; background: #fff; margin-bottom: 10px; border-radius: 10px; }
+        .btn { padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-family: 'Sarabun'; transition: 0.2s; font-size: 14px; }
+        .btn-blue { background: var(--p); color: white; }
+        .btn-green { background: var(--s); color: white; width: 100%; font-size: 1.1rem; }
+        .btn-edit { background: var(--edit); color: white; margin-right: 5px; }
+        .btn-copy { background: var(--copy); color: white; margin-right: 5px; }
+        .btn-export { background: var(--export); color: white; margin-right: 5px; }
+        .btn-del { background: #ef5350; color: white; }
+        .preview-box { background: #000; height: 250px; border-radius: 10px; margin-top: 10px; }
+        input, textarea { width: 100%; padding: 12px; margin-top: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-sizing: border-box; }
+        .badge { background: #e0f2f1; color: #00695c; padding: 4px 10px; border-radius: 5px; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <nav class="tnav">
-        <div class="n-logo">KHON LAB</div>
-        <div class="n-links">
-            <span class="n-link" onclick="showPage('p0')">หน้าแรก</span>
-            <span class="n-link" onclick="showPage('p1')">ความรู้โขน</span>
-            <span class="n-link" onclick="showPage('p2')">AI ออกแบบ</span>
-            <span class="n-link" onclick="showPage('p3')">Zero Waste</span>
-            <span class="n-link" onclick="showPage('p4')">AR Experience</span>
-        </div>
-    </nav>
+<div class="container">
+    <h1 style="color: var(--p); text-align: center;">⚙️ ระบบจัดการข้อสอบ AR</h1>
 
-    <section id="p0" class="page active">
-        <h1>THE ROYAL CONNECTION</h1>
-        <div class="sub-t">สมเด็จพระพันปีหลวงกับมรดกโขนไทย</div>
-        <div class="detail-container">
-            <div class="card">
-                <p>สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง ทรงมีพระมหากรุณาธิคุณอันหาที่สุดมิได้ในการฟื้นฟูการแสดงโขน</p>
-                
-                <p style="margin-top:1rem;">ทรงส่งเสริมช่างฝีมือไทยสิบหมู่และการจัดการแสดงโขนพระราชทาน เพื่อให้อนุชนรุ่นหลังได้สัมผัสมรดกวัฒนธรรมอันล้ำค่าของชาติ</p>
-            </div>
-            <button class="btn-gold" onclick="showPage('p1')">เริ่มเรียนรู้มรดกไทย</button>
-        </div>
-    </section>
-
-    <section id="p1" class="page">
-        <h1>KNOWLEDGE HUB</h1>
-        <div class="sub-t">เลือกหัวข้อเพื่อศึกษาข้อมูลเชิงลึกแบบ Interactive</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-            <div class="card" onclick="showPage('detail-mask')">
-                <h3>🎭 หัวโขน</h3>
-                <p>สัญลักษณ์บอกพงศ์พันธุ์และอัตลักษณ์</p>
-            </div>
-            <div class="card" onclick="showPage('detail-costume')">
-                <h3>👗 การแต่งกาย</h3>
-                <p>งานประณีตศิลป์ ปักสะดึงกรึงไหม</p>
-            </div>
-            <div class="card" onclick="showPage('detail-voice')">
-                <h3>🗣️ การพากย์-เจรจา</h3>
-                <p>จิตวิญญาณแห่งเสียงและภาษาท่าทาง</p>
+    <div class="card" id="editor-section">
+        <h3 id="editor-title" style="color:var(--p); margin-top:0;">➕ สร้างชุดข้อสอบใหม่</h3>
+        <div id="setup-inputs">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="proj-name" placeholder="ชื่อชุดข้อสอบ">
+                <input type="number" id="q-count" placeholder="จำนวนข้อ" min="1" style="width:120px;">
+                <button class="btn btn-blue" id="init-btn" onclick="initQuiz()">เริ่มสร้างฟอร์ม</button>
             </div>
         </div>
-    </section>
-
-    <section id="detail-mask" class="page">
-        <div class="detail-container">
-            <h1>เจาะลึก: หัวโขนไทย (THE MASK)</h1>
-            <div class="detail-body">
-                <p>หัวโขนคือรหัสลับทางวัฒนธรรมที่ใช้จำแนกสถานะและบทบาทของตัวละคร</p>
-                
-                <h4>• สีหน้าบอกพงศ์ (Color Codes)</h4>
-                <p>สีของหัวโขนช่วยให้ผู้ชมแยกแยะตัวละครได้ทันที เช่น สีเขียวมรกตแทนพระราม, สีทองแทนเทพเจ้า และสีขาวแทนหนุมาน</p>
-                <h4>• ยอดมงกุฎบ่งบอกศักดิ์ศรี</h4>
-                <p>ลักษณะยอดมงกุฎสะท้อนยศถาบรรดาศักดิ์ เช่น มงกุฎยอดชัยของตัวพระ หรือชฎาหน้าอสูรของทศกัณฐ์</p>
-                
-            </div>
-            <button class="btn-gold" onclick="showPage('p1')">กลับหน้าความรู้</button>
-        </div>
-    </section>
-
-    <section id="detail-costume" class="page">
-        <div class="detail-container">
-            <h1>เจาะลึก: การแต่งกาย (COSTUME)</h1>
-            <div class="detail-body">
-                <p>เครื่องแต่งกายโขนคืองานปักสะดึงกรึงไหมที่วิจิตรบรรจงที่สุด</p>
-                
-                <h4>• งานประณีตศิลป์ปักดิ้นทอง</h4>
-                <p>ลวดลายบนชุดปักด้วยดิ้นเงินดิ้นทองและเลื่อมแก้วอย่างละเอียด เพื่อให้สะท้อนแสงไฟวิจิตรขณะอยู่บนเวที</p>
-                <h4>• เทคนิคการเย็บสด</h4>
-                <p>ตัวยักษ์และลิงต้องใช้วิธีเย็บชุดให้ติดกับตัวนักแสดงจริงๆ เพื่อความกระชับและคล่องตัวในการร่ายรำ</p>
-                
-            </div>
-            <button class="btn-gold" onclick="showPage('p1')">กลับหน้าความรู้</button>
-        </div>
-    </section>
-
-    <section id="detail-voice" class="page">
-        <div class="detail-container">
-            <h1>เจาะลึก: การพากย์และเจรจา (VOICE)</h1>
-            <div class="detail-body">
-                <p>คณะพากย์เจรจาทำหน้าที่มอบชีวิตและเสียงให้แก่ตัวละครที่สวมหน้ากาก</p>
-                
-                <h4>• ศาสตร์แห่งบทประพันธ์</h4>
-                <p>ผู้พากย์ต้องขับร้องกาพย์ฉบัง 16 และกาพย์ยานี 11 ให้ตรงตามอารมณ์ของเนื้อเรื่อง</p>
-                <h4>• การประสานงานกับวงปี่พาทย์</h4>
-                <p>เสียงพากย์และเสียงดนตรีต้องสอดประสานกันเพื่อคุมจังหวะการแสดงของนักแสดงบนเวที</p>
-            </div>
-            <button class="btn-gold" onclick="showPage('p1')">กลับหน้าความรู้</button>
-        </div>
-    </section>
-
-    <section id="p2" class="page">
-        <h1>AI DESIGN STUDIO</h1>
-        <div class="sub-t">ออกแบบหัวโขนร่วมกับปัญญาประดิษฐ์</div>
-        <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
-            <p>เลือกองค์ประกอบที่คุณต้องการ AI จะวิเคราะห์ความหมายตามขนบธรรมเนียม</p>
-            
-            <button class="btn-gold">เริ่มการออกแบบ</button>
-        </div>
-    </section>
-
-    <section id="p3" class="page">
-        <h1>SUSTAINABLE KHON</h1>
-        <div class="sub-t">วัสดุธรรมชาติสู่แนวคิด Zero Waste</div>
-        <div class="grid-info">
-            <div class="card">
-                <h3>🌿 วัสดุธรรมชาติ</h3>
-                <p>ใช้ไม้ไผ่ ใบตาล และกระดาษสาที่ย่อยสลายได้</p>
-            </div>
-            <div class="card">
-                <h3>♻️ Up-cycling</h3>
-                <p>เปลี่ยนเศษกระดาษเป็นหัวโขนกระดาษมาเช่ทรงคุณค่า</p>
-            </div>
-        </div>
-        
-    </section>
-
-    <section id="p4" class="page">
-        <h1>AR EXPERIENCE</h1>
-        <div class="sub-t">สวมหัวโขนมรดกโลกผ่าน AR</div>
-        <div class="card" style="max-width: 500px; margin: 0 auto; text-align: center;">
-            <p>สวมหัวโขนบนใบหน้าและบันทึกภาพร่วมกับเพื่อนๆ ใน Bubble Wall</p>
-            <button class="btn-gold" onclick="alert('ระบบ AR กำลังเริ่มต้น...')">📷 เปิดกล้อง AR</button>
-            <button class="btn-gold" onclick="loadBubbleWall()">🫧 ดู Bubble Wall</button>
-        </div>
-    </section>
-
-    <div id="bubbleWallOverlay">
-        <div id="bubble-container"></div>
-        <div style="position: absolute; bottom: 30px; width: 100%; text-align: center;">
-            <button class="btn-gold" onclick="hideBubbleWall()">กลับหน้าหลัก</button>
+        <div id="quiz-area"></div>
+        <div id="action-buttons" style="display:none; margin-top:20px; gap:10px;">
+            <button class="btn btn-green" id="save-btn" onclick="saveData()">💾 บันทึกการเปลี่ยนแปลง</button>
+            <button class="btn btn-del" onclick="cancelEdit()" style="width:120px;">ยกเลิก</button>
         </div>
     </div>
 
-    <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzkfOo6lhKc_5no88YZgVtgtGRD09cR8JrDPEfYRQ0vaMYR7hNNRkZQIk0aaW_HyfhM/exec";
+    <div id="dashboard-section">
+        <div class="card">
+            <h3 style="color:var(--s); margin-top:0;">📂 คลังข้อสอบของคุณครู</h3>
+            <div id="quiz-list-admin">กำลังโหลดข้อมูล...</div>
+        </div>
+    </div>
+</div>
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const target = document.getElementById(pageId);
-            target.classList.add('active');
-            window.scrollTo(0, 0);
+<script>
+    // 🚩 Firebase Config ของคุณครู
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBvaBLaqywJ-J3J6hH_UwyF-WmultPim4",
+        authDomain: "ar-quizz.firebaseapp.com",
+        projectId: "ar-quizz",
+        databaseURL: "https://ar-quizz-default-rtdb.asia-southeast1.firebasedatabase.app",
+        storageBucket: "ar-quizz.firebasestorage.app",
+        messagingSenderId: "151328581741",
+        appId: "1:151328581741:web:d148eaa15b7a24b0dcf764"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let currentEditId = null;
+
+    // --- ฟังก์ชันดึงข้อมูลมาโชว์ (หัวใจของหน้า Admin) ---
+    function loadDashboard() {
+        console.log("กำลังดึงข้อมูลจาก Firebase..."); // เช็คใน Console
+        db.ref('quizzes').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const listArea = document.getElementById('quiz-list-admin');
+            
+            if (!data) { 
+                listArea.innerHTML = 'ไม่พบข้อสอบในคลัง โปรดสร้างใหม่ด้านบนครับ'; 
+                return; 
+            }
+
+            listArea.innerHTML = ''; 
+            for (let id in data) {
+                listArea.innerHTML += `
+                    <div class="quiz-item">
+                        <div>
+                            <strong>${data[id].name || 'ไม่มีชื่อ'}</strong> 
+                            <span class="badge">${data[id].questions ? data[id].questions.length : 0} ข้อ</span><br>
+                            <small style="color:gray;">ID: ${id}</small>
+                        </div>
+                        <div class="action-group" style="display:flex;">
+                            <button class="btn btn-copy" onclick="copyId('${id}')">📋 คัดลอก ID</button>
+                            <button class="btn btn-edit" onclick="editQuiz('${id}')">📝 แก้ไข</button>
+                            <button class="btn btn-export" onclick="exportData('${id}')">📊 Export</button>
+                            <button class="btn btn-del" onclick="deleteQuiz('${id}')">🗑️ ลบ</button>
+                        </div>
+                    </div>`;
+            }
+        });
+    }
+
+    // --- ระบบ Export ข้อมูลพฤติกรรม ---
+    window.exportData = function(quizId) {
+        db.ref('student_logs').orderByChild('quizId').equalTo(quizId).once('value', (snapshot) => {
+            const logs = snapshot.val();
+            if (!logs) return alert("ยังไม่มีนักเรียนส่งคำตอบเข้ามาครับ");
+
+            let csv = "\uFEFFStudentName,Q_Number,TimeSpent(s),Interactions,AR_Used,IsCorrect,Confidence,Timestamp\n";
+            for (let id in logs) {
+                const r = logs[id];
+                csv += `${r.name},${r.qIdx+1},${r.time},${r.moves},${r.ar},${r.correct},${r.confidence},${r.timestamp}\n`;
+            }
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Student_Behavior_${quizId}.csv`;
+            link.click();
+        });
+    }
+
+    // --- ฟังก์ชันอื่นๆ ---
+    window.copyId = (id) => { navigator.clipboard.writeText(id); alert("คัดลอกรหัสแล้ว!"); }
+    window.deleteQuiz = (id) => { if(confirm('ยืนยันการลบ?')) db.ref('quizzes/' + id).remove(); }
+    
+    window.initQuiz = function(existing = null) {
+        const n = existing ? existing.length : parseInt(document.getElementById('q-count').value);
+        const area = document.getElementById('quiz-area');
+        area.innerHTML = '';
+        for(let i=0; i<n; i++) {
+            const d = existing ? existing[i] : {q:'', o:[], a:'', m:''};
+            area.innerHTML += `
+                <div style="border:1px solid #eee; padding:20px; border-radius:12px; margin-top:15px; background:#fafafa;">
+                    <h4>ข้อที่ ${i+1}</h4>
+                    <textarea id="q-${i}" placeholder="โจทย์">${d.q}</textarea>
+                    <input type="text" id="o-${i}" placeholder="ตัวเลือก (ก,ข,ค,ง)" value="${d.o.join(',')}">
+                    <input type="text" id="a-${i}" placeholder="คำตอบ" value="${d.a}">
+                    <input type="text" id="m-${i}" placeholder="ลิงก์โมเดล .glb" value="${d.m}" oninput="document.getElementById('v-${i}').src=this.value">
+                    <div class="preview-box"><model-viewer id="v-${i}" src="${d.m}" camera-controls ar style="width:100%; height:100%;"></model-viewer></div>
+                </div>`;
         }
+        document.getElementById('action-buttons').style.display = 'flex';
+    }
 
-        async function loadBubbleWall() {
-            document.getElementById('bubbleWallOverlay').style.display = 'block';
-            try {
-                const resp = await fetch(GAS_URL);
-                const ids = await resp.json();
-                renderBubbles(ids);
-                requestAnimationFrame(animate);
-            } catch (e) { console.error("Error loading bubbles"); }
-        }
-
-        function hideBubbleWall() { document.getElementById('bubbleWallOverlay').style.display = 'none'; }
-
-        function renderBubbles(ids) {
-            const container = document.getElementById('bubble-container');
-            container.innerHTML = '';
-            ids.forEach(id => {
-                const b = document.createElement('div');
-                b.className = 'bubble';
-                const size = 80 + Math.random() * 50;
-                b.style.width = b.style.height = `${size}px`;
-                b.dataset.x = Math.random() * window.innerWidth;
-                b.dataset.y = Math.random() * window.innerHeight;
-                b.innerHTML = `<img src="https://lh3.googleusercontent.com/d/${id}">`;
-                container.appendChild(b);
+    window.saveData = async function() {
+        const name = document.getElementById('proj-name').value;
+        const n = parseInt(document.getElementById('q-count').value);
+        const qs = [];
+        for(let i=0; i<n; i++) {
+            qs.push({
+                q: document.getElementById(`q-${i}`).value,
+                o: document.getElementById(`o-${i}`).value.split(','),
+                a: document.getElementById(`a-${i}`).value,
+                m: document.getElementById(`m-${i}`).value
             });
         }
+        if (currentEditId) await db.ref('quizzes/' + currentEditId).set({ name, questions: qs });
+        else await db.ref('quizzes').push({ name, questions: qs });
+        alert("บันทึกข้อมูลเรียบร้อย!");
+        location.reload();
+    }
 
-        function animate() {
-            const bubbles = document.querySelectorAll('.bubble');
-            const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
-            bubbles.forEach((b1, i) => {
-                let x = parseFloat(b1.dataset.x), y = parseFloat(b1.dataset.y);
-                x += (cx - x) * 0.01; y += (cy - y) * 0.01;
-                bubbles.forEach((b2, j) => {
-                    if (i === j) return;
-                    let dx = x - parseFloat(b2.dataset.x), dy = y - parseFloat(b2.dataset.y);
-                    let dist = Math.sqrt(dx*dx + dy*dy), min = (parseFloat(b1.style.width) + parseFloat(b2.style.width)) / 2 + 15;
-                    if (dist < min) { x += dx * 0.05; y += dy * 0.05; }
-                });
-                b1.dataset.x = x; b1.dataset.y = y;
-                b1.style.left = `${x - parseFloat(b1.style.width)/2}px`;
-                b1.style.top = `${y - parseFloat(b1.style.height)/2}px`;
-            });
-            if(document.getElementById('bubbleWallOverlay').style.display === 'block') requestAnimationFrame(animate);
-        }
-    </script>
+    window.editQuiz = function(id) {
+        db.ref('quizzes/' + id).once('value', (s) => {
+            const data = s.val();
+            currentEditId = id;
+            document.getElementById('editor-title').innerText = "📝 แก้ไข: " + data.name;
+            document.getElementById('proj-name').value = data.name;
+            document.getElementById('q-count').value = data.questions.length;
+            initQuiz(data.questions);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    window.cancelEdit = () => { location.reload(); }
+
+    // รันการดึงข้อมูลเมื่อเปิดหน้า
+    loadDashboard();
+</script>
 </body>
 </html>
